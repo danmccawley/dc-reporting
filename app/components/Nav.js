@@ -1,0 +1,41 @@
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const links = [
+  { href: "/", label: "Executive" },
+  { href: "/site/16", label: "Building 16" },
+  { href: "/site/17", label: "Building 17" },
+  { href: "/site/18", label: "Building 18" },
+  { href: "/report/weekly", label: "Weekly report" },
+  { href: "/reports", label: "Reports" },
+  { href: "/field", label: "Field" },
+];
+
+export default function Nav() {
+  const path = usePathname();
+  const isOn = (href) =>
+    href === "/" ? path === "/" : path.startsWith(href);
+  return (
+    <div className="topbar">
+      <div className="wrap">
+        <Link href="/" className="brand">
+          OVERWATCH MC
+          <small>Abilene · Oracle hyperscaler build</small>
+        </Link>
+        <nav className="nav">
+          {links.map((l) => (
+            <Link key={l.href} href={l.href} className={isOn(l.href) ? "on" : ""}>
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+        <span className="topspacer" />
+        <span className="proto">Prototype · sample data</span>
+        <Link href="/report/daily" className="cta">
+          Submit daily report
+        </Link>
+      </div>
+    </div>
+  );
+}
