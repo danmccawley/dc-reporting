@@ -10,6 +10,7 @@ const links = [
   { href: "/report/weekly", label: "Weekly report" },
   { href: "/reports", label: "Reports" },
   { href: "/insights", label: "Insights" },
+  { href: "/maps", label: "Maps" },
   { href: "/field", label: "Field" },
   { href: "/mobile", label: "Mobile view" },
 ];

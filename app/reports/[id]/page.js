@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import KpiTile from "../../components/KpiTile";
 import PrintButton from "../../components/PrintButton";
+import Photos from "../../components/Photos";
 import {
-  reports, scopes, scopeMatrix, kpis, buildings, getReport, getBuilding,
+  reports, scopes, scopeMatrix, kpis, buildings, getReport, getBuilding, getReportPhotosByDay,
 } from "../../../lib/mock/data";
 import { ragFill, ragLabel } from "../../../lib/rag";
 
@@ -18,6 +19,7 @@ export default function ReportPresentation({ params }) {
   const b = isProgram ? null : getBuilding(r.building);
   const st = r.status === "approved" ? "g" : "a";
   const cols = isProgram ? buildings : [b];
+  const photoDays = getReportPhotosByDay(r.building);
 
   return (
     <div className="report">
@@ -71,6 +73,16 @@ export default function ReportPresentation({ params }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <h2 className="sec">Site photos by day <span className="hint">— captured in the field, grouped by date taken</span></h2>
+      <div className="card">
+        {photoDays.map((pd) => (
+          <div key={pd.date} style={{ marginBottom: 14 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{pd.date}</div>
+            <Photos photos={pd.photos} compact />
+          </div>
+        ))}
       </div>
 
       <h2 className="sec">Deep dives</h2>
