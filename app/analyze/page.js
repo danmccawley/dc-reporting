@@ -12,6 +12,27 @@ export default function Analyze() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [note, setNote] = useState("");
+  const [qa, setQa] = useState([]);
+  const [qaInput, setQaInput] = useState("");
+  const [qaBusy, setQaBusy] = useState(false);
+
+  const ask = async (q) => {
+    const question = (q ?? qaInput).trim();
+    if (!question || qaBusy || (!text && !image)) return;
+    const next = [...qa, { role: "user", content: question }];
+    setQa(next); setQaInput(""); setQaBusy(true);
+    try {
+      const res = await fetch("/api/doc-qa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, image, question, history: qa }),
+      });
+      const data = await res.json();
+      setQa((m) => [...m, { role: "assistant", content: data.answer || "No answer." }]);
+    } catch {
+      setQa((m) => [...m, { role: "assistant", content: "Couldn't reach the analyzer." }]);
+    } finally { setQaBusy(false); }
+  };
 
   const onFile = (e) => {
     const file = e.target.files?.[0];
@@ -49,7 +70,10 @@ export default function Analyze() {
     }
   };
 
-  const reset = () => { setText(""); setImage(null); setImgName(""); setResult(null); setNote(""); };
+  const reset = () => { setText(""); setImage(null); setImgName(""); setResult(null); setNote(""); setQa([]); };
+
+  const QA_SUGGEST = ["Summarize the payment terms", "What do the liquidated damages say?", "Explain the indemnification clause", "What does the termination clause say?"];
+  const hasDoc = !!(text || image);
 
   return (
     <div>
@@ -123,6 +147,34 @@ export default function Analyze() {
           </div>
         </>
       )}
+
+      <h2 className="sec">Ask about this document</h2>
+      <div className="card">
+        {!hasDoc && <div className="notice">Add a document above (paste, upload, or scan) to ask specific questions about it.</div>}
+        {hasDoc && (
+          <>
+            {qa.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
+                {qa.map((m, i) => (
+                  <div key={i} className={`bubble ${m.role}`}>{m.content}</div>
+                ))}
+                {qaBusy && <div className="bubble assistant">…</div>}
+              </div>
+            )}
+            {qa.length === 0 && (
+              <div className="chips" style={{ marginBottom: 12 }}>
+                {QA_SUGGEST.map((s) => (
+                  <span key={s} className="chip" onClick={() => ask(s)}>{s}</span>
+                ))}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={qaInput} onChange={(e) => setQaInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ask()} placeholder="Ask a specific question about this document..." />
+              <button className="btn" onClick={() => ask()} disabled={qaBusy}>Ask</button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
