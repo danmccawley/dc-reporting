@@ -28,7 +28,7 @@ export default function SitePage({ params }) {
         {scopes.map((s) => {
           const [pct, st] = scopeMatrix[s.slug][b.id];
           return (
-            <Link key={s.slug} href={`/scope/${s.slug}`} className="prow" style={{ display: "flex" }}>
+            <Link key={s.slug} href={`/scope/${s.slug}/${b.id}`} className="prow" style={{ display: "flex" }}>
               <span className="pn">{s.name}</span>
               <span className="track">
                 <span className="fill" style={{ width: `${pct}%`, background: ragFill[st] }} />

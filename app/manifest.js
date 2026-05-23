@@ -1,6 +1,6 @@
 export default function manifest() {
   return {
-    name: "Abilene DC Build — Reporting",
+    name: "Generic DC — Reporting",
     short_name: "DC Reporting",
     description: "Multi-site data center construction reporting",
     start_url: "/",

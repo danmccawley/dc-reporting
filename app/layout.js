@@ -3,7 +3,7 @@ import Nav from "./components/Nav";
 import Concierge from "./components/Concierge";
 
 export const metadata = {
-  title: "Project Reporting — Abilene DC Build",
+  title: "DC Reporting — Generic Program",
   description: "Multi-site data center construction reporting prototype",
 };
 

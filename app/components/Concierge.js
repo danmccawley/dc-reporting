@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const SUGGEST = [
   "What's behind schedule?",
@@ -8,7 +9,10 @@ const SUGGEST = [
   "How does the RAG trend work?",
 ];
 
+const HIDE = ["/login", "/start", "/mobile"];
+
 export default function Concierge() {
+  const path = usePathname();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState([
     { role: "assistant", content: "I'm CONCIERGE. Ask me anything about the program or how this platform works." },
@@ -40,6 +44,8 @@ export default function Concierge() {
       setBusy(false);
     }
   };
+
+  if (HIDE.includes(path)) return null;
 
   return (
     <>

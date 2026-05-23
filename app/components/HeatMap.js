@@ -41,7 +41,7 @@ function Cells({ scope }) {
         return (
           <Link
             key={b.id}
-            href={`/scope/${scope.slug}`}
+            href={`/scope/${scope.slug}/${b.id}`}
             className="cell"
             style={{ background: ragFill[st], color: ragInk[st] }}
           >

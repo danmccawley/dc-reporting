@@ -95,7 +95,7 @@ export default function ReportPresentation({ params }) {
             })}
           </div>
           <div style={{ marginTop: 10 }}>
-            <Link href={`/scope/${s.slug}`} className="scopelink">View weekly summary &amp; daily entries →</Link>
+            <Link href={isProgram ? `/scope/${s.slug}` : `/scope/${s.slug}/${b.id}`} className="scopelink">View summary &amp; individual daily reports →</Link>
           </div>
         </div>
       ))}

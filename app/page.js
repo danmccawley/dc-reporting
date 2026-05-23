@@ -35,7 +35,7 @@ export default function Home() {
         <span className="cta" style={{ background: "var(--bar)", color: "var(--bar-ink)" }}>Open field demo</span>
       </Link>
       <div className="eyebrow">Executive overview</div>
-      <h1 className="title">Abilene data center program</h1>
+      <h1 className="title">Generic data center program</h1>
       <p className="sub">Three buildings · live roll-up from approved site reports</p>
 
       <div className="grid g4">
