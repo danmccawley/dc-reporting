@@ -262,3 +262,7 @@ textarea { min-height: 90px; resize: vertical; }
 .seg { font-family: inherit; font-size: 13px; padding: 6px 11px; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; cursor: pointer; color: var(--ink); }
 .seg.on { background: rgba(47,72,88,.1); border-color: var(--accent); font-weight: 600; }
 .mapsvg { width: 100%; height: auto; display: block; user-select: none; }
+
+/* document analyzer findings */
+.finding { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.finding:last-child { border-bottom: 0; }
