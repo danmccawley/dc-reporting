@@ -71,7 +71,7 @@ function DailySchedule({ acts, minDay, maxDay, lo, hi, onPick }) {
 }
 
 // CAD-style construction drawing.
-function CadFloorPlan({ acts, inRange, selId, enter, setSel, building, hi, shellActive }) {
+function CadFloorPlan({ acts, inRange, selId = null, enter, onRoom, onStructure, building, hi, shellActive }) {
   const stateOf = (scope) => { const act = acts.find((a) => a.slug === scope); return { act, active: act && inRange(act) }; };
   return (
     <svg viewBox="0 0 560 470" className="mapsvg cad">
@@ -92,14 +92,14 @@ function CadFloorPlan({ acts, inRange, selId, enter, setSel, building, hi, shell
         {[70, 198, 316].map((gy, i) => <g key={`h${i}`}><line x1="58" y1={gy} x2="478" y2={gy} stroke="#9a988f" strokeWidth="0.5" strokeDasharray="2 3" /><circle cx="56" cy={gy} r="9" fill="#fff" stroke="#1b1c18" strokeWidth="0.7" /><text x="56" y={gy + 3.5} textAnchor="middle" fontSize="8.5" className="cadtxt">{["A", "B", "C"][i]}</text></g>)}
       </g>
       {/* structure / slab hit + exterior wall */}
-      <rect x="70" y="70" width="396" height="246" fill={shellActive ? SCOPE_COLOR[shellActive.slug] : "#fff"} fillOpacity={shellActive ? 0.12 : 0} stroke="none" onMouseEnter={() => enter("structure")} onTouchStart={() => enter("structure")} onClick={() => shellActive && setSel(shellActive.id)} style={{ cursor: "pointer" }} />
+      <rect x="70" y="70" width="396" height="246" fill={shellActive ? SCOPE_COLOR[shellActive.slug] : "#fff"} fillOpacity={shellActive ? 0.12 : 0} stroke="none" onMouseEnter={() => enter("structure")} onTouchStart={() => enter("structure")} onClick={() => shellActive && onStructure(shellActive)} style={{ cursor: "pointer" }} />
       <rect x="70" y="70" width="396" height="246" fill="none" stroke="#1b1c18" strokeWidth="4" pointerEvents="none" />
       <rect x="75" y="75" width="386" height="236" fill="none" stroke="#1b1c18" strokeWidth="1" pointerEvents="none" />
       {/* rooms */}
       {CAD_ROOMS.map((rm) => {
         const { act, active } = stateOf(rm.scope); const sel = act && selId === act.id; const crit = active && act.critical;
         return (
-          <g key={rm.id} onMouseEnter={() => enter(rm.id)} onTouchStart={() => enter(rm.id)} onClick={() => act && setSel(act.id)} style={{ cursor: "pointer" }}>
+          <g key={rm.id} onMouseEnter={() => enter(rm.id)} onTouchStart={() => enter(rm.id)} onClick={() => act && onRoom(act)} style={{ cursor: "pointer" }}>
             <rect x={rm.x} y={rm.y} width={rm.w} height={rm.h} fill={active ? SCOPE_COLOR[rm.scope] : "#fff"} fillOpacity={active ? 0.16 : 0} stroke={sel ? "#1b1c18" : crit ? "#A32D2D" : "#1b1c18"} strokeWidth={sel ? 2.4 : crit ? 1.8 : 0.9} />
             <text x={rm.x + rm.w / 2} y={rm.y + rm.h / 2 - 6} textAnchor="middle" fontSize="10.5" fontWeight="700" className="cadtxt">{rm.name}</text>
             <text x={rm.x + rm.w / 2} y={rm.y + rm.h / 2 + 7} textAnchor="middle" fontSize="8" fill="#5a594f" className="cadtxt">{rm.sf}</text>
@@ -139,7 +139,7 @@ function CadFloorPlan({ acts, inRange, selId, enter, setSel, building, hi, shell
 }
 
 // Aerial-style overhead site map.
-function SiteAerial({ featPct, featPlanned, hoveredKey, enter, onBuilding }) {
+function SiteAerial({ featPct, featPlanned, hoveredKey, enter, onBuilding, onFeature }) {
   const preHi = hoveredKey ? (SITE_DEPS[hoveredKey] || []) : [];
   const depHi = hoveredKey ? (SITE_DEP_OF[hoveredKey] || []) : [];
   const hiStroke = (id) => id === hoveredKey ? "#1b1c18" : preHi.includes(id) ? "#e0a500" : depHi.includes(id) ? "#2f6df0" : null;
@@ -166,7 +166,7 @@ function SiteAerial({ featPct, featPlanned, hoveredKey, enter, onBuilding }) {
         const pct = featPct(f), st = siteStatus(pct), isB = !!f.building, cx = f.x + f.w / 2;
         const sH = hiStroke(f.id);
         return (
-          <g key={f.id} onMouseEnter={() => enter(f.id)} onTouchStart={() => enter(f.id)} onClick={() => { if (isB) onBuilding(f.building); }} style={{ cursor: isB ? "pointer" : "default" }}>
+          <g key={f.id} onMouseEnter={() => enter(f.id)} onTouchStart={() => enter(f.id)} onClick={() => { if (isB) onBuilding(f.building); else if (onFeature) onFeature(f.id); }} style={{ cursor: "pointer" }}>
             <Shadow x={f.x} y={f.y} w={f.w} h={f.h} r={f.id === "waterpond" ? 30 : 4} />
             {isB && <>
               <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="3" fill="#cdd1d6" stroke="#9aa0a8" strokeWidth="1" />
@@ -210,7 +210,6 @@ export default function MapExplorer() {
   const [from, setFrom] = useState(DATA_DATE);
   const [to, setTo] = useState(DATA_DATE);
   const [mapTab, setMapTab] = useState("site");
-  const [selId, setSelId] = useState(null);
   const [tip, setTip] = useState(null);
   const wrapRef = useRef(null);
 
@@ -218,16 +217,16 @@ export default function MapExplorer() {
   const minDay = Math.min(...acts.map((a) => a.start));
   const maxDay = Math.max(...acts.map((a) => Math.max(a.plannedFinish, a.forecastFinish)));
   const byId = (id) => acts.find((a) => a.id === id);
-  const selected = byId(selId) || null;
   const lo = Math.min(from, to), hi = Math.max(from, to);
   const rangeLabel = lo === hi ? fmtDate(lo) : `${fmtDate(lo)} – ${fmtDate(hi)}`;
   const inRange = (a) => scheduledIn(a, lo, hi);
-  const roomFor = (slug) => { const r = CAD_ROOMS.find((z) => z.scope === slug); return r ? r.name : SHELL_SCOPES.includes(slug) ? "Structure / shell" : "Building-wide"; };
-  const switchB = (b) => { setBuilding(b); setSelId(null); setTip(null); };
+  const switchB = (b) => { setBuilding(b); setTip(null); };
   const shellActive = acts.filter((a) => SHELL_SCOPES.includes(a.slug)).find((a) => inRange(a));
   const bpct = (bid) => { const ba = getActivities(bid); return Math.round(ba.reduce((s, a) => s + a.pct, 0) / ba.length); };
   const featPct = (f) => (f.building ? bpct(f.building) : (f.pct || 0));
   const featPlanned = (f) => (f.building ? Math.max(...getActivities(f.building).map((a) => a.plannedFinish)) : f.planned);
+  const qp = `from=${Math.round(lo)}&to=${Math.round(hi)}`;
+  const goScope = (act) => act && router.push(`/scope/${act.slug}/${act.building}?${qp}`);
   const move = (e) => { if (!wrapRef.current) return; const r = wrapRef.current.getBoundingClientRect(); const pt = e.touches ? e.touches[0] : e; setTip((t) => (t ? { ...t, x: pt.clientX - r.left, y: pt.clientY - r.top } : t)); };
   const enter = (key) => setTip((t) => ({ x: t ? t.x : 0, y: t ? t.y : 0, key }));
 
@@ -236,12 +235,23 @@ export default function MapExplorer() {
     let act, name;
     if (tip.key === "structure") { act = shellActive || acts.filter((a) => SHELL_SCOPES.includes(a.slug)).slice(-1)[0]; name = "Structure / shell"; }
     else { const room = CAD_ROOMS.find((r) => r.id === tip.key); name = room?.name; act = acts.find((a) => a.slug === room?.scope); }
+    const stt = act ? actStatus(act, hi) : null;
+    const slip = act ? Math.round(act.forecastFinish - act.plannedFinish) : 0;
     tipNode = (
-      <div className="maptip" style={{ left: Math.min(tip.x + 14, 320), top: tip.y + 14 }}>
+      <div className="maptip" style={{ left: Math.min(tip.x + 14, 340), top: tip.y + 14 }}>
         <div className="tip-h">{name}</div>
-        <div className="tip-sub">Planned work · {rangeLabel}</div>
-        <div className="tip-work">{act ? (act.pct >= 100 ? `${act.name} — complete` : `${act.name} — ${act.pct}%`) : "No scheduled work"}</div>
-        {act && <PrereqBlock act={act} byId={byId} />}
+        <div className="tip-sub">Status · {rangeLabel}</div>
+        {act ? (
+          <div>
+            <div style={{ margin: "6px 0" }}><span className="pill" style={{ background: STATUS_COLOR[stt.key], color: "#fff" }}>{stt.label}</span>{act.critical && <span className="pill" style={{ background: "#A32D2D", color: "#fff", marginLeft: 6 }}>Critical</span>}</div>
+            <div className="tip-row"><span>Start</span><span className="mono">{fmtDate(act.start)}</span></div>
+            <div className="tip-row"><span>Planned</span><span className="mono">{fmtDate(act.plannedFinish)}</span></div>
+            <div className="tip-row"><span>Est. actual</span><span className="mono" style={{ color: slip > 1 ? "#A32D2D" : "#5a8a1f" }}>{fmtDate(act.forecastFinish)}{slip > 1 ? ` +${slip}d` : ""}</span></div>
+            <div className="tip-row"><span>Complete</span><span className="mono">{act.pct}%</span></div>
+            <div style={{ marginTop: 8 }}><PrereqBlock act={act} byId={byId} /></div>
+            <div className="tip-cta">Click to open {act.name} reports →</div>
+          </div>
+        ) : <div className="tip-work">No scheduled work in this window</div>}
       </div>
     );
   } else if (tip && mapTab === "site") {
@@ -255,7 +265,7 @@ export default function MapExplorer() {
         {!f.static && <div className="tip-work">{pct}% complete · <span style={{ color: st.c }}>{st.k}</span></div>}
         {preds.length > 0 && <div><div className="dep-h" style={{ marginTop: 8 }}>Must be ready before this (prerequisite)</div>{preds.map((p) => { const ps = siteStatus(featPct(p)); return <div key={p.id} className="tip-state"><span style={{ color: "#e0a500", fontWeight: 700 }}>■</span> {p.name} — {featPct(p)}% · <span style={{ color: ps.c }}>{ps.k}</span></div>; })}<div className="tip-state"><strong>Cannot energize or commission until:</strong> {preds.map((p) => p.name).join(", ")} are complete. <span style={{ color: "#b98900" }}>(amber on map)</span></div></div>}
         {deps.length > 0 && <div><div className="dep-h" style={{ marginTop: 8 }}>Reliant on this (dependent)</div>{deps.map((d) => <div key={d.id} className="tip-state"><span style={{ color: "#2f6df0", fontWeight: 700 }}>■</span> {d.name}</div>)}<div className="tip-state"><strong>These cannot complete until this is finished:</strong> {deps.map((d) => d.name).join(", ")}. <span style={{ color: "#2f6df0" }}>(blue on map)</span></div></div>}
-        {preds.length === 0 && deps.length === 0 && <div className="tip-none">Site support feature — no scheduling dependencies.</div>}
+        <div className="tip-cta">{f.building ? "Click to open this building’s reports →" : "Click to open capacity & readiness →"}</div>
       </div>
     );
   }
@@ -276,51 +286,14 @@ export default function MapExplorer() {
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 6 }}><span style={{ fontSize: 12, color: "var(--muted)", width: 64 }}>Widen to</span><input type="range" min={minDay} max={maxDay} value={to} onChange={(e) => setTo(Number(e.target.value))} style={{ flex: 1 }} /></div>
       </div>
 
-      <div className="grid g2" style={{ alignItems: "start" }}>
-        <div>
-          <div className="card" style={{ padding: 12 }}>
-            <div className="maphover" ref={wrapRef} style={{ position: "relative" }} onMouseMove={move} onMouseLeave={() => setTip(null)} onTouchMove={move}>
-              {mapTab === "floor"
-                ? <CadFloorPlan acts={acts} inRange={inRange} selId={selId} enter={enter} setSel={setSelId} building={building} hi={hi} shellActive={shellActive} />
-                : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} onBuilding={(b) => router.push(`/site/${b}?from=${Math.round(lo)}&to=${Math.round(hi)}`)} />}
-              {tipNode}
-            </div>
-            <div className="legend"><span style={{ color: "var(--faint)" }}>{mapTab === "floor" ? "Trace over a room for planned work and prerequisites; click to pin detail." : "Trace over a feature for schedule info; prerequisites highlight amber, dependents blue. Click a building to open its drawing."}</span></div>
-          </div>
+      <div className="card" style={{ padding: 12 }}>
+        <div className="maphover" ref={wrapRef} style={{ position: "relative" }} onMouseMove={move} onMouseLeave={() => setTip(null)} onTouchMove={move}>
+          {mapTab === "floor"
+            ? <CadFloorPlan acts={acts} inRange={inRange} enter={enter} onRoom={goScope} onStructure={goScope} building={building} hi={hi} shellActive={shellActive} />
+            : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} onBuilding={(b) => router.push(`/site/${b}?${qp}`)} onFeature={() => router.push(`/capacity?${qp}`)} />}
+          {tipNode}
         </div>
-        <div>
-          <div className="card">
-            {!selected && <div className="notice">Hover a room or feature for its schedule, then click to pin the detail with its dependencies here.</div>}
-            {selected && (() => {
-              const stt = actStatus(selected, hi); const slip = Math.round(selected.forecastFinish - selected.plannedFinish);
-              const gating = selected.gatingId ? byId(selected.gatingId) : null;
-              const depState = (p) => p.pct >= 100 ? "✓ complete" : `forecast ${fmtDate(p.forecastFinish)}`;
-              return (
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                    <span className="swatch" style={{ background: SCOPE_COLOR[selected.slug] }} />
-                    <span style={{ fontWeight: 700, fontSize: 17 }}>{selected.name}</span>
-                    <span style={{ color: "var(--muted)", fontSize: 13 }}>{roomFor(selected.slug)}</span>
-                    <span className="pill" style={{ background: STATUS_COLOR[stt.key], color: "#fff" }}>{stt.label}</span>
-                    {selected.critical && <span className="pill" style={{ background: "#A32D2D", color: "#fff" }}>Critical path</span>}
-                  </div>
-                  <Link href={`/scope/${selected.slug}/${selected.building}?from=${Math.round(lo)}&to=${Math.round(hi)}`} className="reportlink">View {selected.name} reports — {buildings.find((b) => b.id === selected.building)?.name}, {rangeLabel} →</Link>
-                  <div className="caprow"><span>Start</span><span className="mono">{fmtDate(selected.start)}</span></div>
-                  <div className="caprow"><span>Planned completion</span><span className="mono">{fmtDate(selected.plannedFinish)}</span></div>
-                  <div className="caprow"><span>Est. actual completion</span><span className="mono" style={{ color: slip > 1 ? "#A32D2D" : "#5a8a1f" }}>{fmtDate(selected.forecastFinish)}{slip > 1 ? ` · +${slip}d` : ""}</span></div>
-                  <div className="caprow"><span>Percent complete</span><span className="mono">{selected.pct}%</span></div>
-                  {gating && <div className="notice" style={{ marginTop: 12, borderColor: "#A32D2D", background: "rgba(163,45,45,.06)" }}><strong>Held back by {gating.name}</strong> — must complete (forecast {fmtDate(gating.forecastFinish)}) before {selected.name} can finish.</div>}
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-                    <div className="dep-h">Must be complete before this can begin</div>
-                    {selected.pred.length ? selected.pred.map((id) => { const p = byId(id); if (!p) return null; const g = id === selected.gatingId; return <button key={id} className={`depchip ${g ? "gate" : ""}`} onClick={() => setSelId(id)}>{p.name} <span className="depstate">{depState(p)}{g ? " · gating" : ""}</span></button>; }) : <span className="dep-none">None</span>}
-                    <div className="dep-h" style={{ marginTop: 10 }}>Cannot start until this is complete</div>
-                    {selected.succ.length ? selected.succ.map((id) => { const sc = byId(id); if (!sc) return null; const waiting = sc.gatingId === selected.id; return <button key={id} className={`depchip ${waiting ? "gate" : ""}`} onClick={() => setSelId(id)}>{sc.name}{waiting ? <span className="depstate"> · waiting on this</span> : ""}</button>; }) : <span className="dep-none">None</span>}
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </div>
+        <div className="legend"><span style={{ color: "var(--faint)" }}>Move your cursor or finger over any {mapTab === "floor" ? "room" : "feature"} — its status fills in automatically. Click to open the matching reports.</span></div>
       </div>
     </div>
   );

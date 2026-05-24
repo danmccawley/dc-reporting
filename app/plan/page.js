@@ -77,12 +77,22 @@ export default function Plan() {
     let act, name;
     if (tip.key === "structure") { act = shellActive || acts.filter((a) => SHELL_SCOPES.includes(a.slug)).slice(-1)[0]; name = "Structure / shell"; }
     else { const room = CAD_ROOMS.find((r) => r.id === tip.key); name = room?.name; act = acts.find((a) => a.slug === room?.scope); }
+    const stt = act ? actStatus(act, hi) : null;
+    const slip = act ? Math.round(act.forecastFinish - act.plannedFinish) : 0;
     tipNode = (
       <div className="maptip" style={{ left: Math.min(tip.x + 14, 320), top: tip.y + 14 }}>
         <div className="tip-h">{name}</div>
-        <div className="tip-sub">Planned work · {rangeLabel}</div>
-        <div className="tip-work">{act ? (act.pct >= 100 ? `${act.name} — complete` : `${act.name} — ${act.pct}%`) : "No scheduled work"}</div>
-        {act && <PrereqBlock act={act} byId={byId} />}
+        <div className="tip-sub">Status · {rangeLabel}</div>
+        {act ? (
+          <div>
+            <div style={{ margin: "6px 0" }}><span className="pill" style={{ background: STATUS_COLOR[stt.key], color: "#fff" }}>{stt.label}</span>{act.critical && <span className="pill" style={{ background: "#A32D2D", color: "#fff", marginLeft: 6 }}>Critical</span>}</div>
+            <div className="tip-row"><span>Start</span><span className="mono">{fmtDate(act.start)}</span></div>
+            <div className="tip-row"><span>Planned</span><span className="mono">{fmtDate(act.plannedFinish)}</span></div>
+            <div className="tip-row"><span>Est. actual</span><span className="mono" style={{ color: slip > 1 ? "#A32D2D" : "#5a8a1f" }}>{fmtDate(act.forecastFinish)}{slip > 1 ? ` +${slip}d` : ""}</span></div>
+            <div className="tip-row"><span>Complete</span><span className="mono">{act.pct}%</span></div>
+            <div style={{ marginTop: 8 }}><PrereqBlock act={act} byId={byId} /></div>
+          </div>
+        ) : <div className="tip-work">No scheduled work in this window</div>}
       </div>
     );
   } else if (tip && mapTab === "site") {
@@ -180,7 +190,7 @@ export default function Plan() {
           <div className="card" style={{ padding: 12, marginTop: 10 }}>
             <div className="maphover" ref={wrapRef} style={{ position: "relative" }} onMouseMove={move} onMouseLeave={() => setTip(null)} onTouchMove={move}>
               {mapTab === "floor"
-                ? <CadFloorPlan acts={acts} inRange={inRange} selId={selId} enter={enter} setSel={setSelId} building={building} hi={hi} shellActive={shellActive} />
+                ? <CadFloorPlan acts={acts} inRange={inRange} selId={selId} enter={enter} onRoom={(act) => setSelId(act.id)} onStructure={(act) => setSelId(act.id)} building={building} hi={hi} shellActive={shellActive} />
                 : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} onBuilding={(b) => { switchB(b); setMapTab("floor"); }} />}
               {tipNode}
             </div>
