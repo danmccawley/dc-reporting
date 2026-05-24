@@ -287,3 +287,11 @@ textarea { min-height: 90px; resize: vertical; }
 .permtable th, .permtable td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }
 .permtable th { font-size: 12px; color: var(--muted); font-weight: 600; }
 .permtable td:first-child { font-weight: 500; }
+
+/* schedule timeline */
+.timeline { position: relative; height: 84px; margin: 26px 6px 8px; }
+.tl-axis { position: absolute; top: 10px; left: 0; right: 0; height: 3px; background: var(--line); border-radius: 2px; }
+.tl-mark { position: absolute; top: 0; transform: translateX(-50%); text-align: center; width: 92px; }
+.tl-dot { display: block; width: 15px; height: 15px; border-radius: 50%; border: 2px solid; margin: 4px auto 6px; }
+.tl-name { display: block; font-size: 11px; font-weight: 600; line-height: 1.2; }
+.tl-when { display: block; font-size: 10px; color: var(--muted); font-family: var(--mono); }
