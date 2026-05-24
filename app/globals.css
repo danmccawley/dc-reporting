@@ -437,3 +437,16 @@ a.stat:hover { border-color: var(--accent); }
 .schip { font-size: 10px; font-weight: 700; color: #fff; padding: 1px 5px; border-radius: 4px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .schip.more { background: var(--surface-2) !important; color: var(--muted); }
 @media (max-width: 700px) { .scell { min-height: 70px; } .schip { font-size: 9px; } }
+
+/* COACH just-in-time pill (bottom-left, clear of the CONCIERGE FAB) */
+.coachtip { position: fixed; left: 20px; bottom: 20px; z-index: 39; max-width: calc(100vw - 40px); }
+.coachpill { display: inline-flex; align-items: center; gap: 8px; max-width: 360px; padding: 10px 12px 10px 14px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,.16); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.coachpill:hover { border-color: var(--accent); }
+.coachpill-dot { width: 9px; height: 9px; border-radius: 50%; background: #7a3b8a; flex: none; }
+.coachpill-x { margin-left: 4px; color: var(--muted); font-weight: 700; padding: 0 2px; }
+.coachpill-x:hover { color: var(--ink); }
+.coachcard { width: 340px; max-width: calc(100vw - 40px); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.22); padding: 14px 16px; }
+.coachcard-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7a3b8a; margin-bottom: 8px; }
+.coachcard-head button { border: none; background: none; font-size: 18px; line-height: 1; color: var(--muted); cursor: pointer; }
+.coachcard ol { margin-left: 16px; }
+@media print { .coachtip { display: none !important; } }

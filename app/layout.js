@@ -1,6 +1,7 @@
 import "./globals.css";
 import Nav from "./components/Nav";
 import Concierge from "./components/Concierge";
+import CoachTip from "./components/CoachTip";
 import { RoleProvider } from "./components/RoleProvider";
 
 export const metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
           <Nav />
           <main className="wrap page">{children}</main>
           <Concierge />
+          <CoachTip />
         </RoleProvider>
       </body>
     </html>
