@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRole } from "../components/RoleProvider";
 import { ROLES, ROLE_LABEL, CAPS } from "../../lib/roles";
-import { users as seedUsers, integrations } from "../../lib/mock/data";
+import { users as seedUsers, integrations, atomicStats, workedExample } from "../../lib/mock/data";
 
 export default function Admin() {
   const { role } = useRole();
@@ -31,6 +31,7 @@ export default function Admin() {
         <button className={`tabbtn ${tab === "users" ? "on" : ""}`} onClick={() => setTab("users")}>Users &amp; roles</button>
         <button className={`tabbtn ${tab === "perms" ? "on" : ""}`} onClick={() => setTab("perms")}>Permissions</button>
         <button className={`tabbtn ${tab === "integ" ? "on" : ""}`} onClick={() => setTab("integ")}>Integrations</button>
+        <button className={`tabbtn ${tab === "model" ? "on" : ""}`} onClick={() => setTab("model")}>Data model</button>
       </div>
 
       {tab === "users" && (
@@ -84,6 +85,37 @@ export default function Admin() {
           ))}
         </div>
       )}
+
+      {tab === "model" && (() => {
+        const st = atomicStats();
+        const ex = workedExample();
+        const m = (x) => `$${x.toFixed(2)}M`;
+        return (
+          <div>
+            <div className="notice" style={{ marginBottom: 12 }}>One atomic store of dated, tagged entries is the single source of truth. Progress, cost, capacity, commissioning, and KPIs are all computed from it — nothing derived is stored.</div>
+            <div className="grid g4" style={{ marginBottom: 16 }}>
+              <div className="card"><div className="cap-label">Atomic entries</div><div className="kpi-cap">{st.total}</div></div>
+              <div className="card"><div className="cap-label">Progress + labor</div><div className="kpi-cap">{st.progress}</div></div>
+              <div className="card"><div className="cap-label">KPI readings</div><div className="kpi-cap">{st.kpi}</div></div>
+              <div className="card"><div className="cap-label">Capacity + Cx events</div><div className="kpi-cap">{st.capacity + st.cx}</div></div>
+            </div>
+            <div className="card">
+              <div style={{ fontWeight: 700, marginBottom: 8 }}>Worked example — {ex.label}</div>
+              <div className="vhead"><span style={{ flex: 2 }}>Entry (by day)</span><span className="vcol">Installed</span><span className="vcol">Labor</span></div>
+              {ex.rows.map((r, i) => (
+                <div key={i} className="vrow">
+                  <span style={{ flex: 2 }}>{r.date}{r.baseline ? <span style={{ color: "var(--faint)", fontSize: 12, marginLeft: 8 }}>baseline</span> : ""}</span>
+                  <span className="vcol mono">{r.installed} pts</span>
+                  <span className="vcol mono">{m(r.labor)}</span>
+                </div>
+              ))}
+              <div className="notice" style={{ marginTop: 12 }}>
+                Summed: percent complete = <strong>{ex.pct}%</strong> → earned value = budget {m(ex.bac)} × {ex.pct}% = <strong>{m(ex.ev)}</strong>; actual = summed labor = <strong>{m(ex.ac)}</strong>; CPI = earned ÷ actual = <strong>{ex.cpi.toFixed(2)}</strong>. Change any entry and the heat map, cost, and rollups all move together.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

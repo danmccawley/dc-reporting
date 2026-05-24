@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import DailyList from "../../../components/DailyList";
 import {
-  scopes, buildings, scopeMatrix, getScope, getBuilding, getDailyEntries,
+  scopes, buildings, scopeMatrix, getScope, getBuilding, getDailyEntries, getScopeCost,
 } from "../../../../lib/mock/data";
 import { ragFill, ragInk, ragLabel } from "../../../../lib/rag";
 
@@ -18,6 +18,8 @@ export default function ScopeBuildingPage({ params }) {
   if (!s || !b) return notFound();
   const [pct, st] = scopeMatrix[s.slug][b.id];
   const entries = getDailyEntries(s.slug, b.id);
+  const cost = getScopeCost(s.slug, b.id);
+  const m = (x) => `$${x.toFixed(1)}M`;
 
   const summary =
     st === "n"
@@ -49,6 +51,17 @@ export default function ScopeBuildingPage({ params }) {
           <p style={{ margin: "8px 0 0", fontSize: 14 }}>{summary}</p>
           <div className="notice" style={{ marginTop: 10 }}>Synthesized by CHRONICLER from the daily reports. Metrics are computed deterministically.</div>
         </div>
+      </div>
+
+      <h2 className="sec">Cost (earned value)</h2>
+      <div className="card">
+        <div className="grid g4">
+          <div><div className="cap-label">Budget</div><div className="kpi-cap" style={{ fontSize: 22 }}>{m(cost.bac)}</div></div>
+          <div><div className="cap-label">Earned / actual</div><div className="kpi-cap" style={{ fontSize: 22 }}>{m(cost.ev)} <span className="cap-unit">/ {m(cost.ac)}</span></div></div>
+          <div><div className="cap-label">Forecast (EAC)</div><div className="kpi-cap" style={{ fontSize: 22, color: cost.eac <= cost.bac ? "#5a8a1f" : "#A32D2D" }}>{m(cost.eac)}</div></div>
+          <div><div className="cap-label">CPI</div><div className="kpi-cap" style={{ fontSize: 22, color: cost.cpi >= 1 ? "#5a8a1f" : cost.cpi >= 0.95 ? "#b98900" : "#A32D2D" }}>{st === "n" ? "—" : cost.cpi.toFixed(2)}</div></div>
+        </div>
+        <div className="notice" style={{ marginTop: 12 }}>Earned value is budget × percent complete. Actual is built from the daily labor and installed-quantity entries below. <Link href={`/cost/${b.id}`} className="scopelink">All scopes at {b.name} →</Link></div>
       </div>
 
       <h2 className="sec">Individual daily reports <span className="hint">— click one to read it</span></h2>

@@ -42,7 +42,7 @@ export default function DailyList({ entries }) {
                 </>
               )}
               <div className="mono" style={{ fontSize: 12, color: "var(--faint)", marginTop: 8 }}>
-                Reported by {d.author} · % complete {d.pct} · headcount {d.headcount}
+                Reported by {d.author} · % complete {d.pct} · headcount {d.headcount}{d.cost != null ? ` · labor spend $${d.cost}k` : ""}
               </div>
             </div>
           )}
