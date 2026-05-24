@@ -1,17 +1,22 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRole, RoleSwitcher } from "./RoleProvider";
+import { can } from "../../lib/roles";
 
-const links = [
+const baseLinks = [
   { href: "/", label: "Executive" },
   { href: "/site/16", label: "Building 16" },
   { href: "/site/17", label: "Building 17" },
   { href: "/site/18", label: "Building 18" },
+  { href: "/capacity", label: "Capacity" },
+  { href: "/verify", label: "SCOUT" },
   { href: "/report/weekly", label: "Weekly report" },
   { href: "/reports", label: "Reports" },
   { href: "/insights", label: "Insights" },
   { href: "/maps", label: "Maps" },
-  { href: "/analyze", label: "Documents" },
+  { href: "/analyze", label: "Documents", cap: "counsel" },
+  { href: "/admin", label: "Admin", cap: "users" },
   { href: "/field", label: "Field" },
   { href: "/mobile", label: "Mobile view" },
 ];
@@ -20,9 +25,10 @@ const HIDE = ["/login", "/start", "/mobile"];
 
 export default function Nav() {
   const path = usePathname();
+  const { role } = useRole();
   if (HIDE.includes(path)) return null;
-  const isOn = (href) =>
-    href === "/" ? path === "/" : path.startsWith(href);
+  const isOn = (href) => (href === "/" ? path === "/" : path.startsWith(href));
+  const links = baseLinks.filter((l) => !l.cap || can(role, l.cap));
   return (
     <div className="topbar">
       <div className="wrap">
@@ -38,10 +44,8 @@ export default function Nav() {
           ))}
         </nav>
         <span className="topspacer" />
-        <span className="proto">Prototype · sample data</span>
-        <Link href="/report/daily" className="cta">
-          Submit daily report
-        </Link>
+        <RoleSwitcher />
+        {can(role, "submit") && <Link href="/report/daily" className="cta">Submit daily report</Link>}
       </div>
     </div>
   );

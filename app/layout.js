@@ -1,6 +1,7 @@
 import "./globals.css";
 import Nav from "./components/Nav";
 import Concierge from "./components/Concierge";
+import { RoleProvider } from "./components/RoleProvider";
 
 export const metadata = {
   title: "DC Reporting — Generic Program",
@@ -18,9 +19,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Nav />
-        <main className="wrap page">{children}</main>
-        <Concierge />
+        <RoleProvider>
+          <Nav />
+          <main className="wrap page">{children}</main>
+          <Concierge />
+        </RoleProvider>
       </body>
     </html>
   );
