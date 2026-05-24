@@ -377,3 +377,21 @@ a.stat:hover { border-color: var(--accent); }
 .worktile:last-child { border-bottom: none; }
 .worktile:hover { background: var(--surface-2); }
 .worktile.sel { background: rgba(47,72,88,.08); outline: 1px solid var(--accent); }
+
+/* day-by-day schedule list */
+.daysched { max-height: 480px; overflow-y: auto; }
+.dsrow { display: flex; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--line); cursor: pointer; align-items: flex-start; }
+.dsrow:hover { background: var(--surface-2); }
+.dsrow.sel { background: rgba(47,72,88,.10); }
+.dsrow.today { box-shadow: inset 3px 0 0 #b98900; }
+.dsrow.sun .dsdate { color: var(--faint); }
+.dsdate { width: 76px; flex-shrink: 0; font-size: 12px; display: flex; flex-direction: column; line-height: 1.2; }
+.dsdow { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.dstasks { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.dsnone { font-size: 12px; color: var(--faint); font-style: italic; }
+.dschip { font-size: 11px; border: 1px solid; border-left-width: 3px; border-radius: 4px; padding: 1px 6px; display: inline-flex; align-items: center; gap: 5px; background: #fff; }
+.dsdot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+/* CAD drawing text */
+.mapsvg.cad { background: #fff; }
+.cadtxt { font-family: var(--mono); letter-spacing: .02em; }
