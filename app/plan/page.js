@@ -2,15 +2,13 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { buildings } from "../../lib/mock/data";
-import { getActivities, actStatus, AREAS, SCOPE_COLOR, DATA_DATE, fmtDate, dayToDate, dateToDay, ROOMS, SLAB, SHELL_SCOPES, scheduledIn } from "../../lib/plan";
+import { getActivities, actStatus, AREAS, SCOPE_COLOR, DATA_DATE, fmtDate, dayToDate, dateToDay, ROOMS, SLAB, SHELL_SCOPES, scheduledIn, SITE_FEATURES, SITE_DEPS, siteStatus } from "../../lib/plan";
 
 const STATUS_COLOR = { done: "#5a8a1f", active: "#2f6d4f", late: "#A32D2D", ns: "#9a988f" };
 const WK = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const SITE_FOOT = [
-  { id: "16", name: "Building 16", x: 30, y: 80, w: 120, h: 120 },
-  { id: "17", name: "Building 17", x: 170, y: 80, w: 120, h: 120 },
-  { id: "18", name: "Building 18", x: 310, y: 80, w: 140, h: 120 },
-];
+const SITE_DEP_OF = {};
+Object.entries(SITE_DEPS).forEach(([k, arr]) => arr.forEach((p) => { (SITE_DEP_OF[p] = SITE_DEP_OF[p] || []).push(k); }));
+const featById = (id) => SITE_FEATURES.find((f) => f.id === id);
 
 function PrereqBlock({ act, byId }) {
   if (!act) return null;
@@ -75,7 +73,9 @@ export default function Plan() {
   for (let d = 1; d <= dim; d++) cells.push(d);
 
   const shellActive = acts.filter((a) => SHELL_SCOPES.includes(a.slug)).find((a) => inRange(a));
-  const primaryBuilding = (bid) => { const ba = getActivities(bid); return ba.filter((a) => scheduledIn(a, lo, hi)).find((z) => z.critical) || ba.filter((a) => a.pct < 100).find((z) => z.critical) || ba.find((a) => a.pct < 100) || ba[ba.length - 1]; };
+  const bpct = (bid) => { const ba = getActivities(bid); return Math.round(ba.reduce((s, a) => s + a.pct, 0) / ba.length); };
+  const featPct = (f) => (f.building ? bpct(f.building) : (f.pct || 0));
+  const featPlanned = (f) => (f.building ? Math.max(...getActivities(f.building).map((a) => a.plannedFinish)) : f.planned);
 
   const move = (e) => { if (!wrapRef.current) return; const r = wrapRef.current.getBoundingClientRect(); const pt = e.touches ? e.touches[0] : e; setTip((t) => (t ? { ...t, x: pt.clientX - r.left, y: pt.clientY - r.top } : t)); };
   const enter = (key) => setTip((t) => ({ x: t ? t.x : 0, y: t ? t.y : 0, key }));
@@ -95,16 +95,30 @@ export default function Plan() {
         </div>
       );
     } else {
-      const bid = tip.key; const ba = getActivities(bid);
-      const active = ba.filter((a) => scheduledIn(a, lo, hi));
-      const act = primaryBuilding(bid);
+      const f = featById(tip.key);
+      const pct = featPct(f); const st = siteStatus(pct);
+      const preds = (SITE_DEPS[f.id] || []).map(featById).filter(Boolean);
+      const deps = (SITE_DEP_OF[f.id] || []).map(featById).filter(Boolean);
       tipNode = (
-        <div className="maptip" style={{ left: Math.min(tip.x + 14, 300), top: tip.y + 14 }}>
-          <div className="tip-h">{buildings.find((b) => b.id === bid)?.name}</div>
-          <div className="tip-sub">Active scopes · {rangeLabel}</div>
-          <div className="tip-work">{active.length ? active.map((a) => a.name).join(", ") : "No active scopes in this window"}</div>
-          {act && <div className="tip-sub" style={{ marginTop: 8 }}>Critical path now: <strong>{act.name}</strong></div>}
-          {act && <PrereqBlock act={act} byId={(id) => ba.find((z) => z.id === id)} />}
+        <div className="maptip" style={{ left: Math.min(tip.x + 14, 440), top: tip.y + 14 }}>
+          <div className="tip-h">{f.name}</div>
+          <div className="tip-sub">{f.kind}{f.static ? "" : ` · planned ready ${fmtDate(featPlanned(f))}`}</div>
+          {!f.static && <div className="tip-work">{pct}% complete · <span style={{ color: st.c }}>{st.k}</span></div>}
+          {preds.length > 0 && (
+            <div>
+              <div className="dep-h" style={{ marginTop: 8 }}>Must be ready before this (prerequisite)</div>
+              {preds.map((p) => { const ps = siteStatus(featPct(p)); return <div key={p.id} className="tip-state"><span style={{ color: "#b98900", fontWeight: 700 }}>■</span> {p.name} — {featPct(p)}% · <span style={{ color: ps.c }}>{ps.k}</span></div>; })}
+              <div className="tip-state"><strong>Cannot energize or commission until:</strong> {preds.map((p) => p.name).join(", ")} are complete. <span style={{ color: "#b98900" }}>Highlighted in amber on the map.</span></div>
+            </div>
+          )}
+          {deps.length > 0 && (
+            <div>
+              <div className="dep-h" style={{ marginTop: 8 }}>Reliant on this (dependent)</div>
+              {deps.map((d) => <div key={d.id} className="tip-state"><span style={{ color: "#3a5ca8", fontWeight: 700 }}>■</span> {d.name}</div>)}
+              <div className="tip-state"><strong>These cannot complete until this is finished:</strong> {deps.map((d) => d.name).join(", ")}. <span style={{ color: "#3a5ca8" }}>Highlighted in blue on the map.</span></div>
+            </div>
+          )}
+          {preds.length === 0 && deps.length === 0 && <div className="tip-none">Site support feature — no scheduling dependencies.</div>}
         </div>
       );
     }
@@ -237,22 +251,77 @@ export default function Plan() {
                   {/* title block */}
                   <g><rect x="350" y="344" width="170" height="50" fill="#fff" stroke="#3a3933" strokeWidth="1.2" /><line x1="350" y1="362" x2="520" y2="362" stroke="#cfccc2" /><line x1="350" y1="378" x2="520" y2="378" stroke="#cfccc2" /><text x="357" y="357" fontSize="9" fontWeight="700" fill="#3a3933">ORACLE DC · ABILENE</text><text x="357" y="374" fontSize="9" fill="#5a594f">BUILDING {building} · L1 OVERALL PLAN</text><text x="357" y="390" fontSize="9" fill="#5a594f">SHEET A-101 · {fmtDate(hi)}</text></g>
                 </svg>
-              ) : (
-                <svg viewBox="0 0 480 240" className="mapsvg">
-                  <rect x="0" y="0" width="480" height="240" fill="#fbfaf6" rx="8" />
-                  <text x="240" y="30" textAnchor="middle" fontSize="12" fill="var(--faint)">Campus — hover a building, click to open it</text>
-                  {SITE_FOOT.map((b) => {
-                    const ba = getActivities(b.id); const active = ba.some((a) => scheduledIn(a, lo, hi));
-                    const prim = primaryBuilding(b.id); const fill = active && prim ? SCOPE_COLOR[prim.slug] : "#e7e4da";
+              ) : (() => {
+                const hk = tip && mapTab === "site" ? tip.key : null;
+                const preHi = hk ? (SITE_DEPS[hk] || []) : [];
+                const depHi = hk ? (SITE_DEP_OF[hk] || []) : [];
+                const hiStroke = (id) => id === hk ? "#1b1c18" : preHi.includes(id) ? "#b98900" : depHi.includes(id) ? "#3a5ca8" : null;
+                const hiW = (id) => id === hk ? 3.5 : (preHi.includes(id) || depHi.includes(id)) ? 3 : 0;
+                return (
+                <svg viewBox="0 0 680 380" className="mapsvg">
+                  <rect x="0" y="0" width="680" height="380" fill="#dfe6cf" rx="8" />
+                  <rect x="6" y="6" width="668" height="368" fill="#e9e3d4" rx="6" />
+                  {/* fence line */}
+                  <rect x="14" y="14" width="652" height="352" fill="none" stroke="#a59f8c" strokeWidth="1.4" strokeDasharray="2 5" rx="4" />
+                  {/* access + ring roads */}
+                  <path d="M14,300 L520,300" stroke="#cfcabb" strokeWidth="16" fill="none" />
+                  <path d="M520,55 L520,340" stroke="#cfcabb" strokeWidth="16" fill="none" />
+                  <path d="M40,55 L520,55" stroke="#cfcabb" strokeWidth="12" fill="none" />
+                  <line x1="14" y1="300" x2="520" y2="300" stroke="#fff" strokeWidth="1" strokeDasharray="8 8" />
+                  {SITE_FEATURES.map((f) => {
+                    const pct = featPct(f); const st = siteStatus(pct); const isB = !!f.building;
+                    const sH = hiStroke(f.id); const sW = hiW(f.id);
+                    const cx = f.x + f.w / 2;
                     return (
-                      <g key={b.id} onMouseEnter={() => enter(b.id)} onTouchStart={() => enter(b.id)} onClick={() => switchB(b.id)} style={{ cursor: "pointer" }}>
-                        <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="8" fill={fill} fillOpacity={active ? 0.82 : 1} stroke={building === b.id ? "#1b1c18" : "#fff"} strokeWidth={building === b.id ? 3 : 2} />
-                        <text x={b.x + b.w / 2} y={b.y + b.h / 2} textAnchor="middle" fontSize="13" fontWeight="700" fill={active ? "#fff" : "#4a4943"}>{b.name}</text>
+                      <g key={f.id} onMouseEnter={() => enter(f.id)} onTouchStart={() => enter(f.id)} onClick={() => { if (isB) { switchB(f.building); setMapTab("floor"); } }} style={{ cursor: isB ? "pointer" : "default" }}>
+                        {f.kind === "Data center" && <>
+                          <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="3" fill="#c7cdd6" stroke="#7e8893" strokeWidth="1.5" />
+                          <rect x={f.x} y={f.y} width={f.w} height="7" fill={st.c} />
+                          {Array.from({ length: 12 }).map((_, k) => <rect key={k} x={f.x + 14 + (k % 4) * ((f.w - 28) / 4)} y={f.y + 22 + Math.floor(k / 4) * 34} width={(f.w - 28) / 4 - 8} height="22" rx="2" fill="#aab2bd" />)}
+                          <text x={cx} y={f.y + f.h - 22} textAnchor="middle" fontSize="13" fontWeight="700" fill="#2b2f36">{f.name}</text>
+                          <text x={cx} y={f.y + f.h - 8} textAnchor="middle" fontSize="10" fill="#5a594f">{pct}% · {st.k}</text>
+                        </>}
+                        {f.id === "substation" && <>
+                          <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="2" fill="#ded8c8" stroke="#9a9382" strokeWidth="1.2" strokeDasharray="3 3" />
+                          {[0, 1, 2].map((k) => <rect key={k} x={f.x + 14 + k * 34} y={f.y + 22} width="24" height="30" fill="#6b6a63" />)}
+                          <line x1={f.x + 14} y1={f.y + 60} x2={f.x + f.w - 14} y2={f.y + 60} stroke="#6b6a63" strokeWidth="2" />
+                          <text x={cx} y={f.y + f.h - 8} textAnchor="middle" fontSize="10.5" fontWeight="600" fill="#3a3933">Main substation</text>
+                        </>}
+                        {f.id === "genyard" && <>
+                          <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="2" fill="#ded8c8" stroke="#9a9382" strokeWidth="1.2" />
+                          {[0, 1, 2, 3, 4].map((k) => <rect key={k} x={f.x + 10 + k * 23} y={f.y + 16} width="16" height="28" rx="1" fill="#7a7870" />)}
+                          <text x={cx} y={f.y + f.h - 8} textAnchor="middle" fontSize="10.5" fontWeight="600" fill="#3a3933">Generator plant</text>
+                        </>}
+                        {f.id === "chiller" && <>
+                          <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="2" fill="#dfe1dc" stroke="#9a9382" strokeWidth="1.2" />
+                          {[0, 1, 2].map((k) => <circle key={k} cx={f.x + 30 + k * 50} cy={f.y + 32} r="16" fill="#9fb0b8" stroke="#7e8893" />)}
+                          <text x={cx} y={f.y + f.h - 8} textAnchor="middle" fontSize="10.5" fontWeight="600" fill="#3a3933">Cooling plant</text>
+                        </>}
+                        {f.id === "waterpond" && <>
+                          <ellipse cx={cx} cy={f.y + f.h / 2 - 6} rx={f.w / 2 - 6} ry={f.h / 2 - 14} fill="#9ec6d8" stroke="#6f9bb0" strokeWidth="1.2" />
+                          <text x={cx} y={f.y + f.h - 6} textAnchor="middle" fontSize="10.5" fontWeight="600" fill="#3a3933">Retention pond</text>
+                        </>}
+                        {f.id === "parking" && <>
+                          <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="2" fill="#d9d4c6" stroke="#b9b3a2" strokeWidth="1" />
+                          {Array.from({ length: 8 }).map((_, k) => <line key={k} x1={f.x + 10 + k * 12} y1={f.y + 8} x2={f.x + 10 + k * 12} y2={f.y + f.h - 18} stroke="#fff" strokeWidth="1" />)}
+                          <text x={cx} y={f.y + f.h - 6} textAnchor="middle" fontSize="10.5" fill="#5a594f">Parking</text>
+                        </>}
+                        {f.id === "laydown" && <>
+                          <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="2" fill="#e3dcc9" stroke="#b9b3a2" strokeWidth="1" />
+                          {Array.from({ length: 6 }).map((_, k) => <line key={k} x1={f.x + k * 22} y1={f.y + f.h} x2={f.x + k * 22 + f.h} y2={f.y} stroke="#cdc6b2" strokeWidth="1" />)}
+                          <text x={cx} y={f.y + f.h / 2} textAnchor="middle" fontSize="10.5" fill="#5a594f">Laydown yard</text>
+                        </>}
+                        {f.id === "gatehouse" && <><rect x={f.x} y={f.y} width={f.w} height={f.h} rx="2" fill="#cfcabb" stroke="#9a9382" /><text x={cx} y={f.y + f.h + 11} textAnchor="middle" fontSize="9" fill="#7c7b74">Gate</text></>}
+                        <rect x={f.x - 2} y={f.y - 2} width={f.w + 4} height={f.h + 4} rx="4" fill="transparent" stroke={sH || "transparent"} strokeWidth={sW} pointerEvents="none" />
                       </g>
                     );
                   })}
+                  {/* north arrow + scale + title block */}
+                  <g transform="translate(650,30)"><circle r="14" fill="#fff" stroke="#b9b6ac" /><path d="M0,-8 L4,6 L0,2 L-4,6 Z" fill="#3a3933" /><text x="0" y="-16" textAnchor="middle" fontSize="9" fill="#7c7b74">N</text></g>
+                  <g transform="translate(24,344)"><rect x="0" y="0" width="24" height="5" fill="#3a3933" /><rect x="24" y="0" width="24" height="5" fill="#fff" stroke="#3a3933" /><rect x="48" y="0" width="24" height="5" fill="#3a3933" /><text x="0" y="-4" fontSize="9" fill="#5a594f">0</text><text x="60" y="-4" fontSize="9" fill="#5a594f">300 FT</text></g>
+                  <g><rect x="500" y="338" width="166" height="34" fill="#fff" stroke="#3a3933" strokeWidth="1.1" /><text x="507" y="352" fontSize="9" fontWeight="700" fill="#3a3933">ORACLE DC · ABILENE</text><text x="507" y="366" fontSize="9" fill="#5a594f">OVERALL SITE PLAN · SHEET C-100</text></g>
                 </svg>
-              )}
+                ); })()}
               {tipNode}
             </div>
             <div className="legend"><span style={{ color: "var(--faint)" }}>Trace your cursor or finger over a room for planned work and prerequisites. Click to pin the detail below.</span></div>
