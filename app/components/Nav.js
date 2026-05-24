@@ -12,6 +12,7 @@ const baseLinks = [
   { href: "/capacity", label: "Capacity" },
   { href: "/verify", label: "SCOUT" },
   { href: "/schedule", label: "Schedule" },
+  { href: "/plan", label: "Build plan" },
   { href: "/commissioning", label: "Commissioning" },
   { href: "/cost", label: "Cost" },
   { href: "/report/weekly", label: "Weekly report" },
