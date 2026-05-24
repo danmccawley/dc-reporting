@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { buildings } from "../../lib/mock/data";
 import { getActivities, actStatus, SCOPE_COLOR, DATA_DATE, fmtDate, dayToDate, dateToDay, SHELL_SCOPES, scheduledIn, SITE_FEATURES, SITE_DEPS, siteStatus } from "../../lib/plan";
@@ -40,6 +40,13 @@ export default function Plan() {
   const [tip, setTip] = useState(null);
   const [month, setMonth] = useState(() => { const d = dayToDate(DATA_DATE); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const wrapRef = useRef(null);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const b = sp.get("b"); const dy = sp.get("day");
+    if (b && ["16", "17", "18"].includes(b)) setBuilding(b);
+    if (dy != null && !Number.isNaN(Number(dy))) { const n = Number(dy); setFrom(n); setTo(n); const d = dayToDate(n); setMonth(new Date(d.getFullYear(), d.getMonth(), 1)); }
+  }, []);
 
   const acts = getActivities(building);
   const minDay = Math.min(...acts.map((a) => a.start));
