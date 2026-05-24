@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cost } from "../../lib/mock/data";
 
 function cpiStatus(cpi) { return cpi >= 1 ? "g" : cpi >= 0.95 ? "a" : "r"; }
@@ -28,7 +29,7 @@ export default function Cost() {
         {cost.map((c) => {
           const st = cpiStatus(c.cpi);
           return (
-            <div key={c.id} className="vrow">
+            <Link key={c.id} href={`/site/${c.id}`} className="vrow" style={{ color: "inherit" }}>
               <span style={{ flex: 2, fontWeight: 600 }}>{c.name}</span>
               <span className="vcol mono">${c.budget}M</span>
               <span className="vcol mono">${c.committed}M</span>
@@ -36,9 +37,16 @@ export default function Cost() {
               <span className="vcol mono" style={{ color: c.eac <= c.budget ? "#5a8a1f" : "#A32D2D" }}>${c.eac}M</span>
               <span className="vcol mono" style={{ color: FILL[st], fontWeight: 700 }}>{c.cpi.toFixed(2)}</span>
               <span className="vcol mono">${(c.eac / c.mw).toFixed(1)}M</span>
-            </div>
+            </Link>
           );
         })}
+      </div>
+
+      <div className="relnav">
+        <span>Related:</span>
+        <Link href="/capacity">Capacity</Link>
+        <Link href="/commissioning">Commissioning</Link>
+        <Link href="/schedule">Schedule</Link>
       </div>
       <div className="notice" style={{ marginTop: 14 }}>
         CPI below 1.00 flags cost underperformance; EAC is the forecast cost at completion. COMPTROLLER ingests commitments and actuals from the ERP/accounting system and computes these deterministically.

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import HeatMap from "../components/HeatMap";
 import { buildings, scopes, scopeMatrix, kpis } from "../../lib/mock/data";
 import { current } from "../../lib/rag";
@@ -101,18 +102,24 @@ export default function Insights() {
           const series = prod.series[b.id] || [];
           const cur = current(series);
           return (
-            <div className="card" key={b.id}>
+            <Link className="card" href={`/site/${b.id}`} key={b.id} style={{ display: "block" }}>
               <div style={{ fontWeight: 700 }}>{b.name}</div>
               <div className="mono" style={{ fontSize: 22, fontWeight: 700, margin: "2px 0 8px" }}>
                 {cur == null ? "—" : cur}<span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400 }}> m/shift</span>
               </div>
               <Spark series={series} />
-            </div>
+            </Link>
           );
         })}
       </div>
       <div className="notice" style={{ marginTop: 14 }}>
         These are a sample of the CANVAS infographic suite. The full build adds floor-plan heat maps by zone and a scope-by-week velocity map from the same data.
+      </div>
+      <div className="relnav">
+        <span>Related:</span>
+        <Link href="/maps">Maps</Link>
+        <Link href="/capacity">Capacity</Link>
+        <Link href="/verify">SCOUT</Link>
       </div>
     </div>
   );

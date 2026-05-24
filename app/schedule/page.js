@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { schedule } from "../../lib/mock/data";
 import { ragFill, ragInk } from "../../lib/rag";
 
@@ -26,6 +27,11 @@ export default function Schedule() {
                   <span className="tl-when">{m.when}</span>
                 </div>
               ))}
+            </div>
+            <div className="relnav" style={{ marginTop: 14 }}>
+              <Link href={`/site/${b.id}`}>Open building</Link>
+              <Link href="/commissioning">Commissioning</Link>
+              <Link href="/cost">Cost</Link>
             </div>
           </div>
         </div>

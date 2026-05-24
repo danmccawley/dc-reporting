@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { commissioning } from "../../lib/mock/data";
 import { ragFill, ragInk, ragLabel } from "../../lib/rag";
 
@@ -10,7 +11,7 @@ export default function Commissioning() {
 
       <div className="grid g3">
         {commissioning.map((b) => (
-          <div key={b.id} className="card">
+          <Link href={`/site/${b.id}`} className="card" style={{ display: "block" }} key={b.id}>
             <div style={{ fontWeight: 700, marginBottom: 10 }}>{b.name}</div>
             {b.levels.map((l, i) => (
               <div key={i} style={{ marginBottom: 10 }}>
@@ -21,8 +22,16 @@ export default function Commissioning() {
                 <div className="track"><span className="fill" style={{ width: `${l.pct}%`, background: ragFill[l.status] }} /></div>
               </div>
             ))}
-          </div>
+            <div style={{ marginTop: 6, color: "var(--accent)", fontWeight: 600, fontSize: 14 }}>Open building →</div>
+          </Link>
         ))}
+      </div>
+
+      <div className="relnav">
+        <span>Related:</span>
+        <Link href="/capacity">Capacity</Link>
+        <Link href="/schedule">Schedule</Link>
+        <Link href="/cost">Cost</Link>
       </div>
       <div className="notice" style={{ marginTop: 14 }}>
         L5 integrated systems test is the gate to turnover and go-live. KEYSTONE tracks the scripts and issues; the owner&apos;s commissioning representative (CxOR) validates each level before energization and phased turnover.

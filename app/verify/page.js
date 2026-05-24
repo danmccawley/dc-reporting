@@ -27,7 +27,7 @@ export default function Verify() {
           <span style={{ width: 90 }} />
         </div>
         {rows.map((r, i) => (
-          <div key={i} className="vrow">
+          <Link key={i} href={`/scope/${r.slug}/${r.bid}`} className="vrow" style={{ color: "inherit" }}>
             <span style={{ flex: 2 }}>
               <span style={{ fontWeight: 600 }}>{r.scope}</span>
               <span style={{ color: "var(--muted)", fontSize: 13, marginLeft: 6 }}>{r.building}</span>
@@ -40,7 +40,8 @@ export default function Verify() {
             <span style={{ width: 90, textAlign: "right" }}>
               {r.flag ? <span className="pill s-r"><span className="dot d-r" />Review</span> : <span className="pill s-g"><span className="dot d-g" />OK</span>}
             </span>
-          </div>
+            <span style={{ width: 24, textAlign: "right", color: "var(--accent)", fontWeight: 600 }}>→</span>
+          </Link>
         ))}
       </div>
       <div className="notice" style={{ marginTop: 14 }}>

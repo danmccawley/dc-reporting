@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { capacity } from "../../lib/mock/data";
 
 function conf(c) { return c >= 80 ? "g" : c >= 55 ? "a" : "r"; }
@@ -41,7 +42,7 @@ export default function Capacity() {
       <h2 className="sec">By building</h2>
       <div className="grid g3">
         {capacity.map((c) => (
-          <div className="card" key={c.id}>
+          <Link href={`/site/${c.id}`} className="card" style={{ display: "block" }} key={c.id}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontWeight: 700 }}>{c.name}</span>
               <Gauge pct={c.confidence} />
@@ -55,8 +56,16 @@ export default function Capacity() {
             <Bar value={c.racksReady} total={c.racksTotal} color="#2f4858" />
             <div className="caprow" style={{ marginTop: 8 }}><span>First power</span><span className="mono">{c.firstPower}</span></div>
             <div className="caprow"><span>Target go-live</span><span className="mono">{c.goLive}</span></div>
-          </div>
+            <div style={{ marginTop: 10, color: "var(--accent)", fontWeight: 600, fontSize: 14 }}>Open building →</div>
+          </Link>
         ))}
+      </div>
+
+      <div className="relnav">
+        <span>Related:</span>
+        <Link href="/commissioning">Commissioning</Link>
+        <Link href="/schedule">Schedule</Link>
+        <Link href="/cost">Cost</Link>
       </div>
       <div className="notice" style={{ marginTop: 14 }}>
         Capacity is the language owners and the compute-infrastructure team plan in. KEYSTONE feeds commissioning status; AUGUR and PATHFINDER feed go-live confidence from schedule and long-lead risk.

@@ -39,22 +39,23 @@ export default function Home() {
       <p className="sub">Three buildings · live roll-up from approved site reports</p>
 
       <div className="grid g4">
-        <div className="stat"><div className="k">Program complete</div><div className="v mono">{r.pct}<small>%</small></div></div>
-        <div className="stat"><div className="k">Buildings on track</div><div className="v mono">{r.tracked}<small> / {buildings.length}</small></div></div>
-        <div className="stat"><div className="k">Scopes behind (red)</div><div className="v mono">{r.reds}</div></div>
-        <div className="stat"><div className="k">Active agent alerts</div><div className="v mono">{alerts.length}</div></div>
+        <Link href="/insights" className="stat" style={{ display: "block" }}><div className="k">Program complete</div><div className="v mono">{r.pct}<small>%</small></div></Link>
+        <Link href="/capacity" className="stat" style={{ display: "block" }}><div className="k">Buildings on track</div><div className="v mono">{r.tracked}<small> / {buildings.length}</small></div></Link>
+        <Link href="/verify" className="stat" style={{ display: "block" }}><div className="k">Scopes behind (red)</div><div className="v mono">{r.reds}</div></Link>
+        <a href="#alerts" className="stat" style={{ display: "block" }}><div className="k">Active agent alerts</div><div className="v mono">{alerts.length}</div></a>
       </div>
 
       <h2 className="sec">Progress by scope and building</h2>
       <HeatMap />
 
-      <h2 className="sec">Agent alerts &amp; early warnings</h2>
+      <h2 className="sec" id="alerts">Agent alerts &amp; early warnings</h2>
       <div className="card">
         {alerts.map((a, i) => (
-          <div className="alert" key={i}>
+          <Link className="alert alertlink" key={i} href={a.href || "/"}>
             <span className={`ag s-${a.severity}`}>{a.agent}</span>
             <span className="at">{a.text}</span>
-          </div>
+            <span className="alert-arrow">→</span>
+          </Link>
         ))}
         <div className="notice" style={{ marginTop: 14 }}>
           AUGUR and SENTINEL surface ranked hypotheses with confidence and lag for a human to confirm.
