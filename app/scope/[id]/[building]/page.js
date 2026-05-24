@@ -5,6 +5,7 @@ import {
   scopes, buildings, scopeMatrix, getScope, getBuilding, getDailyEntries, getScopeCost,
 } from "../../../../lib/mock/data";
 import { ragFill, ragInk, ragLabel } from "../../../../lib/rag";
+import { fmtDate } from "../../../../lib/plan";
 
 export function generateStaticParams() {
   const out = [];
@@ -12,7 +13,7 @@ export function generateStaticParams() {
   return out;
 }
 
-export default function ScopeBuildingPage({ params }) {
+export default function ScopeBuildingPage({ params, searchParams }) {
   const s = getScope(params.id);
   const b = getBuilding(params.building);
   if (!s || !b) return notFound();
@@ -20,6 +21,9 @@ export default function ScopeBuildingPage({ params }) {
   const entries = getDailyEntries(s.slug, b.id);
   const cost = getScopeCost(s.slug, b.id);
   const m = (x) => `$${x.toFixed(1)}M`;
+  const fromD = searchParams?.from != null ? Number(searchParams.from) : null;
+  const toD = searchParams?.to != null ? Number(searchParams.to) : null;
+  const windowLabel = fromD != null && toD != null ? (fromD === toD ? fmtDate(fromD) : `${fmtDate(fromD)} – ${fmtDate(toD)}`) : null;
 
   const summary =
     st === "n"
@@ -34,6 +38,7 @@ export default function ScopeBuildingPage({ params }) {
       <div className="eyebrow">{s.group} scope · {b.name}</div>
       <h1 className="title">{s.name}</h1>
       <p className="sub">Scope summary for this building. Drill into the individual daily reports below.</p>
+      {windowLabel && <div className="notice" style={{ marginBottom: 14 }}>Opened from the build plan for the selected window: <strong>{windowLabel}</strong>. The daily reports for {s.name} at {b.name} are below.</div>}
 
       <div className="grid g2" style={{ alignItems: "start" }}>
         <div className="card">

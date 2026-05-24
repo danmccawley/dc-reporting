@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { buildings } from "../../lib/mock/data";
 import { getActivities, actStatus, SCOPE_COLOR, DATA_DATE, fmtDate, dayToDate, dateToDay, SHELL_SCOPES, scheduledIn, SITE_FEATURES, SITE_DEPS, siteStatus } from "../../lib/plan";
 
@@ -138,7 +139,7 @@ function CadFloorPlan({ acts, inRange, selId, enter, setSel, building, hi, shell
 }
 
 // Aerial-style overhead site map.
-function SiteAerial({ featPct, featPlanned, hoveredKey, enter, switchB, setMapTab }) {
+function SiteAerial({ featPct, featPlanned, hoveredKey, enter, onBuilding }) {
   const preHi = hoveredKey ? (SITE_DEPS[hoveredKey] || []) : [];
   const depHi = hoveredKey ? (SITE_DEP_OF[hoveredKey] || []) : [];
   const hiStroke = (id) => id === hoveredKey ? "#1b1c18" : preHi.includes(id) ? "#e0a500" : depHi.includes(id) ? "#2f6df0" : null;
@@ -165,7 +166,7 @@ function SiteAerial({ featPct, featPlanned, hoveredKey, enter, switchB, setMapTa
         const pct = featPct(f), st = siteStatus(pct), isB = !!f.building, cx = f.x + f.w / 2;
         const sH = hiStroke(f.id);
         return (
-          <g key={f.id} onMouseEnter={() => enter(f.id)} onTouchStart={() => enter(f.id)} onClick={() => { if (isB) { switchB(f.building); setMapTab("floor"); } }} style={{ cursor: isB ? "pointer" : "default" }}>
+          <g key={f.id} onMouseEnter={() => enter(f.id)} onTouchStart={() => enter(f.id)} onClick={() => { if (isB) onBuilding(f.building); }} style={{ cursor: isB ? "pointer" : "default" }}>
             <Shadow x={f.x} y={f.y} w={f.w} h={f.h} r={f.id === "waterpond" ? 30 : 4} />
             {isB && <>
               <rect x={f.x} y={f.y} width={f.w} height={f.h} rx="3" fill="#cdd1d6" stroke="#9aa0a8" strokeWidth="1" />
@@ -204,6 +205,7 @@ export { PrereqBlock, CadFloorPlan, SiteAerial, CAD_ROOMS, SITE_DEP_OF, featById
 
 // Self-contained interactive maps view used by the Maps page.
 export default function MapExplorer() {
+  const router = useRouter();
   const [building, setBuilding] = useState("17");
   const [from, setFrom] = useState(DATA_DATE);
   const [to, setTo] = useState(DATA_DATE);
@@ -280,7 +282,7 @@ export default function MapExplorer() {
             <div className="maphover" ref={wrapRef} style={{ position: "relative" }} onMouseMove={move} onMouseLeave={() => setTip(null)} onTouchMove={move}>
               {mapTab === "floor"
                 ? <CadFloorPlan acts={acts} inRange={inRange} selId={selId} enter={enter} setSel={setSelId} building={building} hi={hi} shellActive={shellActive} />
-                : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} switchB={switchB} setMapTab={setMapTab} />}
+                : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} onBuilding={(b) => router.push(`/site/${b}?from=${Math.round(lo)}&to=${Math.round(hi)}`)} />}
               {tipNode}
             </div>
             <div className="legend"><span style={{ color: "var(--faint)" }}>{mapTab === "floor" ? "Trace over a room for planned work and prerequisites; click to pin detail." : "Trace over a feature for schedule info; prerequisites highlight amber, dependents blue. Click a building to open its drawing."}</span></div>
@@ -302,6 +304,7 @@ export default function MapExplorer() {
                     <span className="pill" style={{ background: STATUS_COLOR[stt.key], color: "#fff" }}>{stt.label}</span>
                     {selected.critical && <span className="pill" style={{ background: "#A32D2D", color: "#fff" }}>Critical path</span>}
                   </div>
+                  <Link href={`/scope/${selected.slug}/${selected.building}?from=${Math.round(lo)}&to=${Math.round(hi)}`} className="reportlink">View {selected.name} reports — {buildings.find((b) => b.id === selected.building)?.name}, {rangeLabel} →</Link>
                   <div className="caprow"><span>Start</span><span className="mono">{fmtDate(selected.start)}</span></div>
                   <div className="caprow"><span>Planned completion</span><span className="mono">{fmtDate(selected.plannedFinish)}</span></div>
                   <div className="caprow"><span>Est. actual completion</span><span className="mono" style={{ color: slip > 1 ? "#A32D2D" : "#5a8a1f" }}>{fmtDate(selected.forecastFinish)}{slip > 1 ? ` · +${slip}d` : ""}</span></div>

@@ -395,3 +395,7 @@ a.stat:hover { border-color: var(--accent); }
 /* CAD drawing text */
 .mapsvg.cad { background: #fff; }
 .cadtxt { font-family: var(--mono); letter-spacing: .02em; }
+
+/* report link in activity detail */
+.reportlink { display: inline-block; margin: 2px 0 12px; padding: 7px 12px; background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; }
+.reportlink:hover { filter: brightness(1.08); }

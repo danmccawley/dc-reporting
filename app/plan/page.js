@@ -181,7 +181,7 @@ export default function Plan() {
             <div className="maphover" ref={wrapRef} style={{ position: "relative" }} onMouseMove={move} onMouseLeave={() => setTip(null)} onTouchMove={move}>
               {mapTab === "floor"
                 ? <CadFloorPlan acts={acts} inRange={inRange} selId={selId} enter={enter} setSel={setSelId} building={building} hi={hi} shellActive={shellActive} />
-                : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} switchB={switchB} setMapTab={setMapTab} />}
+                : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} onBuilding={(b) => { switchB(b); setMapTab("floor"); }} />}
               {tipNode}
             </div>
             <div className="legend"><span style={{ color: "var(--faint)" }}>{mapTab === "floor" ? "Trace over a room for planned work and prerequisites; click to pin detail." : "Trace over a feature for schedule info; prerequisites highlight amber, dependents blue. Click a building to open its drawing."}</span></div>
@@ -205,6 +205,7 @@ export default function Plan() {
                     <span className="pill" style={{ background: STATUS_COLOR[stt.key], color: "#fff" }}>{stt.label}</span>
                     {selected.critical && <span className="pill" style={{ background: "#A32D2D", color: "#fff" }}>Critical path</span>}
                   </div>
+                  <Link href={`/scope/${selected.slug}/${selected.building}?from=${Math.round(lo)}&to=${Math.round(hi)}`} className="reportlink">View {selected.name} reports — {buildings.find((b) => b.id === selected.building)?.name}, {rangeLabel} →</Link>
                   <div className="caprow"><span>Start</span><span className="mono">{fmtDate(selected.start)}</span></div>
                   <div className="caprow"><span>Planned completion</span><span className="mono">{fmtDate(selected.plannedFinish)}</span></div>
                   <div className="caprow"><span>Est. actual completion <span style={{ color: "var(--faint)" }}>(throughput)</span></span><span className="mono" style={{ color: slip > 1 ? "#A32D2D" : "#5a8a1f" }}>{fmtDate(selected.forecastFinish)}{slip > 1 ? ` · +${slip}d` : ""}</span></div>
