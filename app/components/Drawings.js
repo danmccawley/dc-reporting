@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { buildings } from "../../lib/mock/data";
@@ -211,7 +211,25 @@ export default function MapExplorer() {
   const [to, setTo] = useState(DATA_DATE);
   const [mapTab, setMapTab] = useState("site");
   const [tip, setTip] = useState(null);
+  const [edit, setEdit] = useState(false);
+  const [draft, setDraft] = useState(null);
+  const [pending, setPending] = useState(null);
+  const [picKey, setPicKey] = useState("");
+  const [imgFloor, setImgFloor] = useState({});
+  const [imgSite, setImgSite] = useState(null);
+  const [zFloor, setZFloor] = useState({});
+  const [zSite, setZSite] = useState([]);
   const wrapRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      const gf = {}, gz = {};
+      ["16", "17", "18"].forEach((b) => { const i = localStorage.getItem(`dcr_img_floor_${b}`); if (i) gf[b] = i; const z = localStorage.getItem(`dcr_zones_floor_${b}`); if (z) gz[b] = JSON.parse(z); });
+      setImgFloor(gf); setZFloor(gz);
+      const si = localStorage.getItem("dcr_img_site"); if (si) setImgSite(si);
+      const sz = localStorage.getItem("dcr_zones_site"); if (sz) setZSite(JSON.parse(sz));
+    } catch (e) {}
+  }, []);
 
   const acts = getActivities(building);
   const minDay = Math.min(...acts.map((a) => a.start));
@@ -220,64 +238,121 @@ export default function MapExplorer() {
   const lo = Math.min(from, to), hi = Math.max(from, to);
   const rangeLabel = lo === hi ? fmtDate(lo) : `${fmtDate(lo)} – ${fmtDate(hi)}`;
   const inRange = (a) => scheduledIn(a, lo, hi);
-  const switchB = (b) => { setBuilding(b); setTip(null); };
+  const switchB = (b) => { setBuilding(b); setTip(null); setEdit(false); setPending(null); };
   const shellActive = acts.filter((a) => SHELL_SCOPES.includes(a.slug)).find((a) => inRange(a));
   const bpct = (bid) => { const ba = getActivities(bid); return Math.round(ba.reduce((s, a) => s + a.pct, 0) / ba.length); };
   const featPct = (f) => (f.building ? bpct(f.building) : (f.pct || 0));
   const featPlanned = (f) => (f.building ? Math.max(...getActivities(f.building).map((a) => a.plannedFinish)) : f.planned);
   const qp = `from=${Math.round(lo)}&to=${Math.round(hi)}`;
   const goScope = (act) => act && router.push(`/scope/${act.slug}/${act.building}?${qp}`);
-  const move = (e) => { if (!wrapRef.current) return; const r = wrapRef.current.getBoundingClientRect(); const pt = e.touches ? e.touches[0] : e; setTip((t) => (t ? { ...t, x: pt.clientX - r.left, y: pt.clientY - r.top } : t)); };
-  const enter = (key) => setTip((t) => ({ x: t ? t.x : 0, y: t ? t.y : 0, key }));
+
+  const img = mapTab === "floor" ? imgFloor[building] : imgSite;
+  const zones = mapTab === "floor" ? (zFloor[building] || []) : zSite;
+  const zoneOpts = mapTab === "floor" ? acts.map((a) => ({ key: a.slug, name: a.name })) : SITE_FEATURES.map((f) => ({ key: f.id, name: f.name }));
+
+  const floorAct = (key) => {
+    if (key === "structure") return { act: shellActive, name: "Structure / shell" };
+    const room = CAD_ROOMS.find((r) => r.id === key); if (room) return { act: acts.find((a) => a.slug === room.scope), name: room.name };
+    const a = acts.find((z) => z.slug === key); return { act: a || null, name: a ? a.name : key };
+  };
+
+  const saveFloorZones = (b, arr) => { const next = { ...zFloor, [b]: arr }; setZFloor(next); try { localStorage.setItem(`dcr_zones_floor_${b}`, JSON.stringify(arr)); } catch (e) {} };
+  const saveSiteZones = (arr) => { setZSite(arr); try { localStorage.setItem("dcr_zones_site", JSON.stringify(arr)); } catch (e) {} };
+  const addZone = (z) => { if (mapTab === "floor") saveFloorZones(building, [...zones, z]); else saveSiteZones([...zones, z]); };
+  const delZone = (id) => { if (mapTab === "floor") saveFloorZones(building, zones.filter((z) => z.id !== id)); else saveSiteZones(zones.filter((z) => z.id !== id)); };
+
+  const onFile = (e) => {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        const max = 1600, scale = Math.min(1, max / im.width);
+        const cv = document.createElement("canvas"); cv.width = im.width * scale; cv.height = im.height * scale;
+        cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+        const data = cv.toDataURL("image/jpeg", 0.85);
+        try {
+          if (mapTab === "floor") { localStorage.setItem(`dcr_img_floor_${building}`, data); setImgFloor((m) => ({ ...m, [building]: data })); }
+          else { localStorage.setItem("dcr_img_site", data); setImgSite(data); }
+        } catch (err) { alert("Image too large to store in this browser. Try a smaller photo."); }
+        setEdit(true);
+      };
+      im.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  const clearImg = () => {
+    if (mapTab === "floor") { setImgFloor((m) => { const n = { ...m }; delete n[building]; return n; }); try { localStorage.removeItem(`dcr_img_floor_${building}`); } catch (e) {} }
+    else { setImgSite(null); try { localStorage.removeItem("dcr_img_site"); } catch (e) {} }
+    setEdit(false); setPending(null);
+  };
+
+  const rel = (e) => { const r = wrapRef.current.getBoundingClientRect(); const pt = e.touches ? e.touches[0] : e; return { x: (pt.clientX - r.left) / r.width, y: (pt.clientY - r.top) / r.height, px: pt.clientX - r.left, py: pt.clientY - r.top }; };
+  const move = (e) => {
+    if (!wrapRef.current) return;
+    const p = rel(e);
+    if (edit && draft) { setDraft({ x0: draft.x0, y0: draft.y0, x: Math.min(draft.x0, p.x), y: Math.min(draft.y0, p.y), w: Math.abs(p.x - draft.x0), h: Math.abs(p.y - draft.y0) }); return; }
+    setTip((t) => (t ? { ...t, x: p.px, y: p.py } : t));
+  };
+  const down = (e) => { if (!edit || !img || pending) return; const p = rel(e); setDraft({ x0: p.x, y0: p.y, x: p.x, y: p.y, w: 0, h: 0 }); setTip(null); };
+  const up = () => { if (edit && draft) { if (draft.w > 0.02 && draft.h > 0.02) { setPending(draft); setPicKey(zoneOpts[0]?.key || ""); } setDraft(null); } };
+  const enter = (key) => { if (edit) return; setTip((t) => ({ x: t ? t.x : 0, y: t ? t.y : 0, key })); };
+
+  const clickZone = (z) => {
+    if (edit) return;
+    if (mapTab === "floor") { const { act } = floorAct(z.key); goScope(act); }
+    else { const f = featById(z.key); if (f && f.building) router.push(`/site/${f.building}?${qp}`); else router.push(`/capacity?${qp}`); }
+  };
 
   let tipNode = null;
-  if (tip && mapTab === "floor") {
-    let act, name;
-    if (tip.key === "structure") { act = shellActive || acts.filter((a) => SHELL_SCOPES.includes(a.slug)).slice(-1)[0]; name = "Structure / shell"; }
-    else { const room = CAD_ROOMS.find((r) => r.id === tip.key); name = room?.name; act = acts.find((a) => a.slug === room?.scope); }
-    const stt = act ? actStatus(act, hi) : null;
-    const slip = act ? Math.round(act.forecastFinish - act.plannedFinish) : 0;
-    tipNode = (
-      <div className="maptip" style={{ left: Math.min(tip.x + 14, 340), top: tip.y + 14 }}>
-        <div className="tip-h">{name}</div>
-        <div className="tip-sub">Status · {rangeLabel}</div>
-        {act ? (
-          <div>
-            <div style={{ margin: "6px 0" }}><span className="pill" style={{ background: STATUS_COLOR[stt.key], color: "#fff" }}>{stt.label}</span>{act.critical && <span className="pill" style={{ background: "#A32D2D", color: "#fff", marginLeft: 6 }}>Critical</span>}</div>
-            <div className="tip-row"><span>Start</span><span className="mono">{fmtDate(act.start)}</span></div>
-            <div className="tip-row"><span>Planned</span><span className="mono">{fmtDate(act.plannedFinish)}</span></div>
-            <div className="tip-row"><span>Est. actual</span><span className="mono" style={{ color: slip > 1 ? "#A32D2D" : "#5a8a1f" }}>{fmtDate(act.forecastFinish)}{slip > 1 ? ` +${slip}d` : ""}</span></div>
-            <div className="tip-row"><span>Complete</span><span className="mono">{act.pct}%</span></div>
-            <div style={{ marginTop: 8 }}><PrereqBlock act={act} byId={byId} /></div>
-            <div className="tip-cta">Click to open {act.name} reports →</div>
-          </div>
-        ) : <div className="tip-work">No scheduled work in this window</div>}
-      </div>
-    );
-  } else if (tip && mapTab === "site") {
-    const f = featById(tip.key); const pct = featPct(f), st = siteStatus(pct);
-    const preds = (SITE_DEPS[f.id] || []).map(featById).filter(Boolean);
-    const deps = (SITE_DEP_OF[f.id] || []).map(featById).filter(Boolean);
-    tipNode = (
-      <div className="maptip" style={{ left: Math.min(tip.x + 14, 440), top: tip.y + 14 }}>
-        <div className="tip-h">{f.name}</div>
-        <div className="tip-sub">{f.kind}{f.static ? "" : ` · planned ready ${fmtDate(featPlanned(f))}`}</div>
-        {!f.static && <div className="tip-work">{pct}% complete · <span style={{ color: st.c }}>{st.k}</span></div>}
-        {preds.length > 0 && <div><div className="dep-h" style={{ marginTop: 8 }}>Must be ready before this (prerequisite)</div>{preds.map((p) => { const ps = siteStatus(featPct(p)); return <div key={p.id} className="tip-state"><span style={{ color: "#e0a500", fontWeight: 700 }}>■</span> {p.name} — {featPct(p)}% · <span style={{ color: ps.c }}>{ps.k}</span></div>; })}<div className="tip-state"><strong>Cannot energize or commission until:</strong> {preds.map((p) => p.name).join(", ")} are complete. <span style={{ color: "#b98900" }}>(amber on map)</span></div></div>}
-        {deps.length > 0 && <div><div className="dep-h" style={{ marginTop: 8 }}>Reliant on this (dependent)</div>{deps.map((d) => <div key={d.id} className="tip-state"><span style={{ color: "#2f6df0", fontWeight: 700 }}>■</span> {d.name}</div>)}<div className="tip-state"><strong>These cannot complete until this is finished:</strong> {deps.map((d) => d.name).join(", ")}. <span style={{ color: "#2f6df0" }}>(blue on map)</span></div></div>}
-        <div className="tip-cta">{f.building ? "Click to open this building’s reports →" : "Click to open capacity & readiness →"}</div>
-      </div>
-    );
+  if (tip && !edit) {
+    if (mapTab === "floor") {
+      const { act, name } = floorAct(tip.key);
+      const stt = act ? actStatus(act, hi) : null; const slip = act ? Math.round(act.forecastFinish - act.plannedFinish) : 0;
+      tipNode = (
+        <div className="maptip" style={{ left: Math.min(tip.x + 14, 340), top: tip.y + 14 }}>
+          <div className="tip-h">{name}</div>
+          <div className="tip-sub">Status · {rangeLabel}</div>
+          {act ? (
+            <div>
+              <div style={{ margin: "6px 0" }}><span className="pill" style={{ background: STATUS_COLOR[stt.key], color: "#fff" }}>{stt.label}</span>{act.critical && <span className="pill" style={{ background: "#A32D2D", color: "#fff", marginLeft: 6 }}>Critical</span>}</div>
+              <div className="tip-row"><span>Start</span><span className="mono">{fmtDate(act.start)}</span></div>
+              <div className="tip-row"><span>Planned</span><span className="mono">{fmtDate(act.plannedFinish)}</span></div>
+              <div className="tip-row"><span>Est. actual</span><span className="mono" style={{ color: slip > 1 ? "#A32D2D" : "#5a8a1f" }}>{fmtDate(act.forecastFinish)}{slip > 1 ? ` +${slip}d` : ""}</span></div>
+              <div className="tip-row"><span>Complete</span><span className="mono">{act.pct}%</span></div>
+              <div style={{ marginTop: 8 }}><PrereqBlock act={act} byId={byId} /></div>
+              <div className="tip-cta">Click to open {act.name} reports →</div>
+            </div>
+          ) : <div className="tip-work">No scheduled work in this window</div>}
+        </div>
+      );
+    } else {
+      const f = featById(tip.key); const pct = featPct(f), st = siteStatus(pct);
+      const preds = (SITE_DEPS[f.id] || []).map(featById).filter(Boolean);
+      const deps = (SITE_DEP_OF[f.id] || []).map(featById).filter(Boolean);
+      tipNode = (
+        <div className="maptip" style={{ left: Math.min(tip.x + 14, 440), top: tip.y + 14 }}>
+          <div className="tip-h">{f.name}</div>
+          <div className="tip-sub">{f.kind}{f.static ? "" : ` · planned ready ${fmtDate(featPlanned(f))}`}</div>
+          {!f.static && <div className="tip-work">{pct}% complete · <span style={{ color: st.c }}>{st.k}</span></div>}
+          {preds.length > 0 && <div><div className="dep-h" style={{ marginTop: 8 }}>Must be ready before this (prerequisite)</div>{preds.map((p) => { const ps = siteStatus(featPct(p)); return <div key={p.id} className="tip-state"><span style={{ color: "#e0a500", fontWeight: 700 }}>■</span> {p.name} — {featPct(p)}% · <span style={{ color: ps.c }}>{ps.k}</span></div>; })}<div className="tip-state"><strong>Cannot energize or commission until:</strong> {preds.map((p) => p.name).join(", ")} are complete.</div></div>}
+          {deps.length > 0 && <div><div className="dep-h" style={{ marginTop: 8 }}>Reliant on this (dependent)</div>{deps.map((d) => <div key={d.id} className="tip-state"><span style={{ color: "#2f6df0", fontWeight: 700 }}>■</span> {d.name}</div>)}<div className="tip-state"><strong>These cannot complete until this is finished:</strong> {deps.map((d) => d.name).join(", ")}.</div></div>}
+          <div className="tip-cta">{f.building ? "Click to open this building’s reports →" : "Click to open capacity & readiness →"}</div>
+        </div>
+      );
+    }
   }
-  const hoveredKey = tip && mapTab === "site" ? tip.key : null;
+  const hoveredKey = tip && mapTab === "site" && !edit ? tip.key : null;
+
+  const zoneColor = (z) => mapTab === "floor" ? (SCOPE_COLOR[z.key] || "#3f6d7d") : "#3f6d7d";
 
   return (
     <div>
       <div className="mapctrls"><div className="ctrlgroup"><span className="ctrllabel">Building</span>{buildings.map((b) => <button key={b.id} className={`seg ${building === b.id ? "on" : ""}`} onClick={() => switchB(b.id)}>{b.name}</button>)}</div></div>
 
       <div className="maptabs">
-        <button className={`tabbtn ${mapTab === "site" ? "on" : ""}`} onClick={() => { setMapTab("site"); setTip(null); }}>Site map</button>
-        <button className={`tabbtn ${mapTab === "floor" ? "on" : ""}`} onClick={() => { setMapTab("floor"); setTip(null); }}>Construction drawing</button>
+        <button className={`tabbtn ${mapTab === "site" ? "on" : ""}`} onClick={() => { setMapTab("site"); setTip(null); setEdit(false); setPending(null); }}>Site map</button>
+        <button className={`tabbtn ${mapTab === "floor" ? "on" : ""}`} onClick={() => { setMapTab("floor"); setTip(null); setEdit(false); setPending(null); }}>Construction drawing</button>
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>
@@ -286,14 +361,42 @@ export default function MapExplorer() {
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 6 }}><span style={{ fontSize: 12, color: "var(--muted)", width: 64 }}>Widen to</span><input type="range" min={minDay} max={maxDay} value={to} onChange={(e) => setTo(Number(e.target.value))} style={{ flex: 1 }} /></div>
       </div>
 
+      <div className="imgbar">
+        <label className="imgbtn">{img ? "Replace image" : (mapTab === "floor" ? "Upload / photograph drawing" : "Upload site image")}<input type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} /></label>
+        {img && <button className={`imgbtn ${edit ? "on" : ""}`} onClick={() => { setEdit((v) => !v); setTip(null); setPending(null); }}>{edit ? "Done placing zones" : "Place zones"}</button>}
+        {img && <button className="imgbtn" onClick={clearImg}>Remove image</button>}
+        <span className="imghint">{img ? (edit ? "Drag a box over an area, then tag what it is. Tap the × to delete." : "Hover for status · click to open reports.") : "Upload a site aerial or a photo of the construction drawing to use it as the live base layer."}</span>
+      </div>
+
       <div className="card" style={{ padding: 12 }}>
-        <div className="maphover" ref={wrapRef} style={{ position: "relative" }} onMouseMove={move} onMouseLeave={() => setTip(null)} onTouchMove={move}>
-          {mapTab === "floor"
-            ? <CadFloorPlan acts={acts} inRange={inRange} enter={enter} onRoom={goScope} onStructure={goScope} building={building} hi={hi} shellActive={shellActive} />
-            : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} onBuilding={(b) => router.push(`/site/${b}?${qp}`)} onFeature={() => router.push(`/capacity?${qp}`)} />}
-          {tipNode}
-        </div>
-        <div className="legend"><span style={{ color: "var(--faint)" }}>Move your cursor or finger over any {mapTab === "floor" ? "room" : "feature"} — its status fills in automatically. Click to open the matching reports.</span></div>
+        {img ? (
+          <div className="imgwrap" ref={wrapRef} onMouseMove={move} onMouseLeave={() => { if (!edit) setTip(null); }} onMouseDown={down} onMouseUp={up} onTouchMove={move} onTouchStart={down} onTouchEnd={up} style={{ cursor: edit ? "crosshair" : "default" }}>
+            <img src={img} alt="base map" className="imgbase" draggable="false" />
+            {zones.map((z) => (
+              <div key={z.id} className="zone" style={{ left: `${z.x * 100}%`, top: `${z.y * 100}%`, width: `${z.w * 100}%`, height: `${z.h * 100}%`, borderColor: zoneColor(z), background: `${zoneColor(z)}22` }}
+                onMouseEnter={() => enter(z.key)} onTouchStart={() => enter(z.key)} onClick={() => clickZone(z)}>
+                <span className="zlab" style={{ background: zoneColor(z) }}>{z.label || z.key}</span>
+                {edit && <button className="zdel" onClick={(e) => { e.stopPropagation(); delZone(z.id); }}>×</button>}
+              </div>
+            ))}
+            {draft && <div className="zone draftz" style={{ left: `${draft.x * 100}%`, top: `${draft.y * 100}%`, width: `${draft.w * 100}%`, height: `${draft.h * 100}%` }} />}
+            {pending && (
+              <div className="zpick" style={{ left: `${pending.x * 100}%`, top: `${(pending.y + pending.h) * 100}%` }}>
+                <select value={picKey} onChange={(e) => setPicKey(e.target.value)}>{zoneOpts.map((o) => <option key={o.key} value={o.key}>{o.name}</option>)}</select>
+                <button onClick={() => { const o = zoneOpts.find((x) => x.key === picKey) || zoneOpts[0]; addZone({ id: Date.now(), x: pending.x, y: pending.y, w: pending.w, h: pending.h, key: o.key, label: o.name }); setPending(null); }}>Add</button>
+                <button onClick={() => setPending(null)}>Cancel</button>
+              </div>
+            )}
+            {tipNode}
+          </div>
+        ) : (
+          <div className="maphover" ref={wrapRef} style={{ position: "relative" }} onMouseMove={move} onMouseLeave={() => setTip(null)} onTouchMove={move}>
+            {mapTab === "floor"
+              ? <CadFloorPlan acts={acts} inRange={inRange} enter={enter} onRoom={goScope} onStructure={goScope} building={building} hi={hi} shellActive={shellActive} />
+              : <SiteAerial featPct={featPct} featPlanned={featPlanned} hoveredKey={hoveredKey} enter={enter} onBuilding={(b) => router.push(`/site/${b}?${qp}`)} onFeature={() => router.push(`/capacity?${qp}`)} />}
+            {tipNode}
+          </div>
+        )}
       </div>
     </div>
   );
