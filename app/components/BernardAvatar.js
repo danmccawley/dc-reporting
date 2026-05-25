@@ -61,6 +61,7 @@ export default function BernardAvatar() {
     const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
     if (!SR) { setMicS("unsupported"); return; }
     try { if (navigator.mediaDevices?.getUserMedia) { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach((t) => t.stop()); } } catch { setMicS("blocked"); return; }
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {}
     const rec = new SR(); rec.lang = "en-US"; rec.interimResults = false; rec.continuous = false;
     rec.onstart = () => setMicS("listening");
     rec.onresult = (e) => { setMicS("idle"); send(e.results[0][0].transcript); };
@@ -91,6 +92,7 @@ export default function BernardAvatar() {
             {B.nextLabel && <button className="chip" style={{ marginTop: 8 }} onClick={() => B.deeper(true)}>{B.nextLabel} →</button>}
             {micS === "blocked" && <div className="voice-hint">Mic blocked. Click the lock icon in the address bar, allow microphone, then try again.</div>}
             {micS === "unsupported" && <div className="voice-hint">This browser can't capture speech — use Chrome or Edge, or type.</div>}
+            {B.heard && <div className="voice-hint">heard: “{B.heard}”</div>}
           </div>
         </div>
         <div className="presenter-controls">

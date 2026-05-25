@@ -35,7 +35,7 @@ export default function Concierge() {
             <div ref={endRef} />
           </div>
           <div className="voice-row">
-            <button className={`voice-btn ${B.voice ? "on" : ""}`} onClick={B.toggleVoice}>{B.voice ? <><span className="voice-dot" /> Listening… say “Bernard” once</> : "\ud83c\udf99 Voice mode"}</button>
+            <button className={`voice-btn ${B.voice ? "on" : ""}`} onClick={B.toggleVoice}>{B.voice ? <><span className="voice-dot" /> Listening… just talk (say “stop” to end)</> : "\ud83c\udf99 Voice mode"}</button>
             <button className="chip" onClick={() => B.summarize(false)}>Summarize this page</button>
             {B.nextLabel && <button className="chip" onClick={() => B.deeper(false)}>{B.nextLabel} →</button>}
             {B.mic === "unsupported" && <span className="voice-hint">Voice needs Chrome or Edge.</span>}

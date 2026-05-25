@@ -67,6 +67,7 @@ export function BernardProvider({ children }) {
   }, [deeper, summarize, ask]);
 
   const handleHeard = useCallback((t) => {
+    if (!t || t.trim().length < 2) return;
     setHeard(t); const low = t.toLowerCase();
     if (!armedRef.current) { const i = low.indexOf("bernard"); if (i === -1) return; armedRef.current = true; const rest = t.slice(i + 7).replace(/^[,\s]+/, "").trim(); if (rest) route(rest, true); return; }
     let q = t; const i = low.indexOf("bernard"); if (i !== -1) q = t.slice(i + 7).replace(/^[,\s]+/, "").trim() || t;
@@ -83,7 +84,8 @@ export function BernardProvider({ children }) {
     rec.onresult = (e) => { const r = e.results[e.results.length - 1]; if (r && r[0]) handleHeard(r[0].transcript.trim()); };
     rec.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { setMic("blocked"); stopVoice(); } };
     rec.onend = () => { if (voiceRef.current) { try { rec.start(); } catch {} } };
-    recRef.current = rec; voiceRef.current = true; armedRef.current = false; setVoice(true); setPanelOpen(true);
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {}
+    recRef.current = rec; voiceRef.current = true; armedRef.current = true; setVoice(true); setPanelOpen(true);
     try { rec.start(); } catch {}
   }, [handleHeard, stopVoice]);
   const toggleVoice = useCallback(() => { if (voiceRef.current) stopVoice(); else startVoice(); }, [startVoice, stopVoice]);
