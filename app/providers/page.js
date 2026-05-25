@@ -9,7 +9,7 @@ export default function Providers() {
   const integrated = DOMAINS.length - native;
   const set = (key, mode) => setRegistry((r) => ({ ...r, [key]: mode }));
 
-  const NATIVE_ROUTE = { records: "/records", schedule: "/plan", cost: "/commitments", field: "/rfis", bim: "/maps" };
+  const NATIVE_ROUTE = { records: "/records", schedule: "/plan", cost: "/commitments", field: "/rfis", bim: "/maps", presenter: "/coach" };
 
   return (
     <div>

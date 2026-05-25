@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useRole } from "../components/RoleProvider";
 import { ROLE_LABEL } from "../../lib/roles";
 import { SKILLS, recommendForRole } from "../../lib/coach";
+import { buildClass } from "../../lib/presenter";
+import Presenter from "../components/Presenter";
 
 export default function Coach() {
   const { role } = useRole();
   const [known, setKnown] = useState({});
   const [open, setOpen] = useState(null);
+  const [playing, setPlaying] = useState(null);
   const toggle = (k) => setKnown((m) => ({ ...m, [k]: !m[k] }));
 
   const all = recommendForRole(role);
@@ -27,10 +30,16 @@ export default function Coach() {
           <ol style={{ margin: "0 0 0 18px", padding: 0 }}>
             {l.steps.map((s, i) => <li key={i} style={{ fontSize: 13.5, color: "#2b2f2e", marginBottom: 7, lineHeight: 1.45 }}>{s}</li>)}
           </ol>
-          <Link href={l.tryIt.href} className="scopelink" style={{ display: "inline-block", marginTop: 8 }}>{l.tryIt.label} →</Link>
+          <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button className="btn" onClick={() => setPlaying(l)}>▶ Play narrated class</button>
+            <Link href={l.tryIt.href} className="scopelink">{l.tryIt.label} →</Link>
+          </div>
         </div>
       )}
-      {open !== l.id && <div style={{ marginTop: 8 }}><button className="chip" onClick={() => setOpen(l.id)}>Show the 60-second lesson</button></div>}
+      {open !== l.id && <div style={{ marginTop: 8, display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button className="chip" onClick={() => setOpen(l.id)}>Show the 60-second lesson</button>
+        <button className="chip" onClick={() => setPlaying(l)}>▶ Play narrated class</button>
+      </div>}
     </div>
   );
 
@@ -63,8 +72,9 @@ export default function Coach() {
 
       <div className="relnav"><span>Related:</span><Link href="/assistant">Assistant</Link><Link href="/quality">Report quality</Link><Link href="/plan">Build plan</Link></div>
       <div className="notice" style={{ marginTop: 14 }}>
-        COACH also appears as a small prompt on individual screens (look for the Coach pill near the assistant). Each lesson ends with a concrete action so you practice the skill on real program data, not a sandbox.
+        COACH also appears as a small prompt on individual screens (look for the Coach pill near the assistant). Each lesson ends with a concrete action so you practice the skill on real program data, not a sandbox. Press <strong>Play narrated class</strong> for the avatar-led version.
       </div>
+      {playing && <Presenter mode="class" deck={buildClass(playing)} agent="COACH" onClose={() => setPlaying(null)} />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Presenter from "../components/Presenter";
 
 const SUGGEST = [
   "What's behind schedule right now?",
@@ -21,6 +22,7 @@ export default function Assistant() {
   const [msgs, setMsgs] = useState([{ role: "assistant", content: "I'm CONCIERGE. I can answer anything about the program — schedule, cost, capacity, risks, the new field tools — and explain how the platform works. Ask me, or use a starter below." }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [speak, setSpeak] = useState(null);
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
@@ -46,7 +48,14 @@ export default function Assistant() {
       <div className="grid g2" style={{ alignItems: "start" }}>
         <div className="card" style={{ display: "flex", flexDirection: "column", height: 460, padding: 0, overflow: "hidden" }}>
           <div style={{ flex: 1, overflowY: "auto", padding: 18 }}>
-            {msgs.map((m, i) => <div key={i} className={`bubble ${m.role}`}>{m.content}</div>)}
+            {msgs.map((m, i) => (
+              <div key={i}>
+                <div className={`bubble ${m.role}`}>{m.content}</div>
+                {m.role === "assistant" && i > 0 && (
+                  <button className="chip" style={{ marginBottom: 10 }} onClick={() => setSpeak(m.content)}>▶ Ask Aria (avatar)</button>
+                )}
+              </div>
+            ))}
             {busy && <div className="bubble assistant">…</div>}
             <div ref={endRef} />
           </div>
@@ -71,8 +80,9 @@ export default function Assistant() {
         </div>
       </div>
       <div className="notice" style={{ marginTop: 14 }}>
-        Key-free demo answers the common questions from the live data. With an API key set, CONCIERGE answers anything using the full program context. In production it runs against the organization&apos;s internal model endpoint, so no project data leaves the tenant.
+        Key-free demo answers the common questions from the live data. With an API key set, CONCIERGE answers anything using the full program context. In production it runs against the organization&apos;s internal model endpoint, so no project data leaves the tenant. Press <strong>Ask Aria (avatar)</strong> on any answer for the narrated avatar version.
       </div>
+      {speak && <Presenter mode="reply" text={speak} agent="CONCIERGE" onClose={() => setSpeak(null)} />}
     </div>
   );
 }
