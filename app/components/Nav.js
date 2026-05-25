@@ -23,6 +23,8 @@ const baseLinks = [
   { href: "/maps", label: "Maps" },
   { href: "/coach", label: "Coach" },
   { href: "/assistant", label: "Assistant" },
+  { href: "/library", label: "Knowledge" },
+  { href: "/forge", label: "Solutions" },
   { href: "/analyze", label: "Documents", cap: "counsel" },
   { href: "/admin", label: "Admin", cap: "users" },
   { href: "/field", label: "Field" },
