@@ -25,6 +25,7 @@ const GROUPS = [
   ] },
   { title: "Field operations", links: [
     { href: "/ops", label: "Operations hub" },
+    { href: "/rfis", label: "RFIs & submittals" },
     { href: "/manpower", label: "Manpower" },
     { href: "/procurement", label: "Procurement" },
     { href: "/weather", label: "Weather" },
@@ -34,6 +35,8 @@ const GROUPS = [
   { title: "Delivery", links: [
     { href: "/commissioning", label: "Commissioning" },
     { href: "/cost", label: "Cost" },
+    { href: "/commitments", label: "Commitments" },
+    { href: "/records", label: "Document control" },
     { href: "/verify", label: "SCOUT verify" },
   ] },
   { title: "Safety & compliance", links: [
@@ -52,6 +55,7 @@ const GROUPS = [
     { href: "/forge", label: "Solutions factory" },
   ] },
   { title: "Tools & admin", links: [
+    { href: "/providers", label: "Provider registry" },
     { href: "/analyze", label: "Documents", cap: "counsel" },
     { href: "/admin", label: "Admin", cap: "users" },
     { href: "/field", label: "Field (PWA)" },
