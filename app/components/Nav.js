@@ -12,6 +12,7 @@ const GROUPS = [
     { href: "/capacity", label: "Capacity" },
     { href: "/insights", label: "Insights" },
     { href: "/maps", label: "Maps" },
+    { href: "/drawings", label: "Drawings & models" },
   ] },
   { title: "Buildings", links: [
     { href: "/site/16", label: "Building 16" },
@@ -36,6 +37,7 @@ const GROUPS = [
     { href: "/commissioning", label: "Commissioning" },
     { href: "/cost", label: "Cost" },
     { href: "/commitments", label: "Commitments" },
+    { href: "/governance", label: "Governance" },
     { href: "/records", label: "Document control" },
     { href: "/verify", label: "SCOUT verify" },
   ] },
