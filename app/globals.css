@@ -450,3 +450,18 @@ a.stat:hover { border-color: var(--accent); }
 .coachcard-head button { border: none; background: none; font-size: 18px; line-height: 1; color: var(--muted); cursor: pointer; }
 .coachcard ol { margin-left: 16px; }
 @media print { .coachtip { display: none !important; } }
+
+/* Grouped hamburger menu — whole platform on one screen (desktop + mobile) */
+.menubtn { display: inline-flex; align-items: center; gap: 9px; background: rgba(255,255,255,.08); color: #fff; border: none; padding: 8px 13px; border-radius: 9px; cursor: pointer; font-size: 14px; font-weight: 600; }
+.menubtn:hover { background: rgba(255,255,255,.16); }
+.menubars { font-size: 16px; line-height: 1; }
+.menubtn-label { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-scrim { position: fixed; inset: 60px 0 0 0; background: rgba(0,0,0,.38); z-index: 30; }
+.megamenu { position: fixed; top: 60px; left: 0; right: 0; z-index: 31; background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: 0 24px 60px rgba(0,0,0,.18); max-height: calc(100vh - 60px); overflow-y: auto; }
+.megawrap { max-width: 1240px; margin: 0 auto; padding: 22px 24px 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px 26px; }
+.megagroup h4 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.megagroup a { display: block; padding: 7px 9px; border-radius: 7px; color: var(--ink); font-size: 14px; text-decoration: none; }
+.megagroup a:hover { background: var(--surface-2); }
+.megagroup a.on { background: rgba(47,109,125,.12); color: var(--accent); font-weight: 600; }
+@media (max-width: 640px) { .menubtn-label { display: none; } .megawrap { grid-template-columns: 1fr 1fr; padding: 16px; } }
+@media print { .menubtn, .menu-scrim, .megamenu { display: none !important; } }
