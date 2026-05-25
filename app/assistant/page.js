@@ -19,7 +19,7 @@ const QUICK = [
 ];
 
 export default function Assistant() {
-  const [msgs, setMsgs] = useState([{ role: "assistant", content: "I'm CONCIERGE. I can answer anything about the program — schedule, cost, capacity, risks, the new field tools — and explain how the platform works. Ask me, or use a starter below." }]);
+  const [msgs, setMsgs] = useState([{ role: "assistant", content: "I'm Bernard. I can answer anything about the program — schedule, cost, capacity, risks, the new field tools — and explain how the platform works. Ask me, or use a starter below." }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [speak, setSpeak] = useState(null);
@@ -41,7 +41,7 @@ export default function Assistant() {
 
   return (
     <div>
-      <div className="eyebrow">CONCIERGE · assistant</div>
+      <div className="eyebrow">BERNARD · assistant</div>
       <h1 className="title">Assistant</h1>
       <p className="sub">CONCIERGE is the way to interact with the whole platform in plain language. It answers from the live program data and explains how anything works. Every answer is grounded in the same computed numbers the dashboards show.</p>
 
@@ -52,7 +52,7 @@ export default function Assistant() {
               <div key={i}>
                 <div className={`bubble ${m.role}`}>{m.content}</div>
                 {m.role === "assistant" && i > 0 && (
-                  <button className="chip" style={{ marginBottom: 10 }} onClick={() => setSpeak(m.content)}>▶ Ask Aria (avatar)</button>
+                  <button className="chip" style={{ marginBottom: 10 }} onClick={() => setSpeak(m.content)}>▶ Bernard reads this</button>
                 )}
               </div>
             ))}
@@ -80,9 +80,9 @@ export default function Assistant() {
         </div>
       </div>
       <div className="notice" style={{ marginTop: 14 }}>
-        Key-free demo answers the common questions from the live data. With an API key set, CONCIERGE answers anything using the full program context. In production it runs against the organization&apos;s internal model endpoint, so no project data leaves the tenant. Press <strong>Ask Aria (avatar)</strong> on any answer for the narrated avatar version.
+        Key-free demo answers the common questions from the live data. With an API key set, CONCIERGE answers anything using the full program context. In production it runs against the organization&apos;s internal model endpoint, so no project data leaves the tenant. Press <strong>Bernard reads this</strong> on any answer for the narrated avatar version.
       </div>
-      {speak && <Presenter mode="reply" text={speak} agent="CONCIERGE" onClose={() => setSpeak(null)} />}
+      {speak && <Presenter mode="reply" text={speak} agent="BERNARD" onClose={() => setSpeak(null)} />}
     </div>
   );
 }

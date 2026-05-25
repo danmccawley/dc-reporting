@@ -1,88 +1,133 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import Presenter from "./Presenter";
+import { pageSummary } from "../../lib/context";
 
 const SUGGEST = [
+  "Summarize this page",
   "What's behind schedule?",
   "Why is Building 17 electrical red?",
   "What does AUGUR do?",
-  "How does the RAG trend work?",
 ];
-
 const HIDE = ["/login", "/start", "/mobile"];
 
 export default function Concierge() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState([
-    { role: "assistant", content: "I'm CONCIERGE. Ask me anything about the program or how this platform works." },
+    { role: "assistant", content: "I'm Bernard, your assistant. I can summarize any page, answer anything about the program, and speak for the other agents — so you only deal with one voice. Ask me, or turn on voice and just say “Bernard…”." },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [speak, setSpeak] = useState(null);
+  const [voice, setVoice] = useState(false);
+  const [heard, setHeard] = useState("");
+  const [voiceOk, setVoiceOk] = useState(true);
   const endRef = useRef(null);
+  const recogRef = useRef(null);
+  const voiceRef = useRef(false);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, open]);
 
-  const send = async (text) => {
+  const send = useCallback(async (text, autospeak = false) => {
     const q = (text ?? input).trim();
     if (!q || busy) return;
     const next = [...msgs, { role: "user", content: q }];
-    setMsgs(next);
-    setInput("");
-    setBusy(true);
+    setMsgs(next); setInput(""); setBusy(true);
     try {
-      const res = await fetch("/api/concierge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q, history: next.slice(1, -1) }),
-      });
+      const res = await fetch("/api/concierge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q, history: next.slice(1, -1) }) });
       const data = await res.json();
-      setMsgs((m) => [...m, { role: "assistant", content: data.answer || "Sorry, I couldn't answer that." }]);
+      const answer = data.answer || "Sorry, I couldn't answer that.";
+      setMsgs((m) => [...m, { role: "assistant", content: answer }]);
+      if (autospeak || voiceRef.current) setSpeak(answer);
     } catch {
       setMsgs((m) => [...m, { role: "assistant", content: "Network error reaching the assistant." }]);
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
+  }, [input, busy, msgs]);
+
+  const summarize = () => {
+    const s = pageSummary(path);
+    setMsgs((m) => [...m, { role: "user", content: "Summarize this page" }, { role: "assistant", content: s }]);
+    if (voiceRef.current) setSpeak(s); else setSpeak(s);
   };
+
+  // Hands-free wake-word voice mode (say "Bernard ...").
+  const handleHeard = useCallback((t) => {
+    setHeard(t);
+    const low = t.toLowerCase();
+    const i = low.indexOf("bernard");
+    if (i === -1) return; // require the wake word
+    let q = t.slice(i + "bernard".length).replace(/^[,\s]+/, "").trim();
+    if (/summari[sz]e|read this page|what'?s on (this|the) (page|screen)/i.test(q) || !q) { summarize(); return; }
+    setOpen(true);
+    send(q, true);
+  }, [send, path]);
+
+  const stopVoice = useCallback(() => {
+    voiceRef.current = false; setVoice(false);
+    try { recogRef.current && recogRef.current.stop(); } catch {}
+  }, []);
+
+  const startVoice = useCallback(() => {
+    const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!SR) { setVoiceOk(false); return; }
+    const rec = new SR();
+    rec.continuous = true; rec.interimResults = false; rec.lang = "en-US";
+    rec.onresult = (e) => { const r = e.results[e.results.length - 1]; if (r && r[0]) handleHeard(r[0].transcript.trim()); };
+    rec.onerror = () => {};
+    rec.onend = () => { if (voiceRef.current) { try { rec.start(); } catch {} } };
+    recogRef.current = rec;
+    voiceRef.current = true; setVoice(true); setOpen(true);
+    try { rec.start(); } catch {}
+  }, [handleHeard]);
+
+  useEffect(() => () => { voiceRef.current = false; try { recogRef.current && recogRef.current.stop(); } catch {} }, []);
 
   if (HIDE.includes(path)) return null;
 
   return (
     <>
-      <button className="concierge-fab" onClick={() => setOpen(!open)} aria-label="Ask CONCIERGE">
-        {open ? "×" : "Ask"}
-      </button>
+      <button className="concierge-fab" onClick={() => setOpen(!open)} aria-label="Ask Bernard">{open ? "×" : "Ask"}</button>
       {open && (
         <div className="concierge">
           <div className="concierge-head">
-            <span style={{ fontWeight: 700 }}>CONCIERGE</span>
-            <span style={{ fontSize: 12, color: "var(--faint)" }}>Q&amp;A · demo data</span>
+            <Link href="/assistant" className="concierge-title">Bernard <span style={{ fontSize: 11, fontWeight: 400, color: "var(--accent)" }}>open ↗</span></Link>
+            <span style={{ fontSize: 12, color: "var(--faint)" }}>your assistant</span>
           </div>
           <div className="concierge-body">
             {msgs.map((m, i) => (
-              <div key={i} className={`bubble ${m.role}`}>{m.content}</div>
+              <div key={i}>
+                <div className={`bubble ${m.role}`}>{m.content}</div>
+                {m.role === "assistant" && (
+                  <div className="bubble-actions"><button className="chip" onClick={() => setSpeak(m.content)}>▶ Bernard reads this</button></div>
+                )}
+              </div>
             ))}
             {busy && <div className="bubble assistant">…</div>}
             <div ref={endRef} />
           </div>
+          <div className="voice-row">
+            <button className={`voice-btn ${voice ? "on" : ""}`} onClick={() => (voice ? stopVoice() : startVoice())}>
+              {voice ? <><span className="voice-dot" /> Listening… say “Bernard”</> : "🎙 Voice mode"}
+            </button>
+            <button className="chip" onClick={summarize}>Summarize this page</button>
+            {!voiceOk && <span className="voice-hint">Voice input isn't supported in this browser.</span>}
+            {voice && heard && <span className="voice-hint">heard: “{heard}”</span>}
+          </div>
           {msgs.length <= 1 && (
             <div className="concierge-suggest">
-              {SUGGEST.map((s) => (
-                <button key={s} className="chip" onClick={() => send(s)}>{s}</button>
-              ))}
+              {SUGGEST.map((s) => <button key={s} className="chip" onClick={() => (s === "Summarize this page" ? summarize() : send(s))}>{s}</button>)}
             </div>
           )}
           <div className="concierge-input">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="Ask a question..."
-            />
+            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Ask Bernard…" />
             <button className="btn" onClick={() => send()} disabled={busy}>Send</button>
           </div>
         </div>
       )}
+      {speak && <Presenter mode="reply" text={speak} agent="BERNARD" onClose={() => setSpeak(null)} />}
     </>
   );
 }
