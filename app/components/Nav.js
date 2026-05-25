@@ -36,6 +36,9 @@ const GROUPS = [
     { href: "/cost", label: "Cost" },
     { href: "/verify", label: "SCOUT verify" },
   ] },
+  { title: "Safety & compliance", links: [
+    { href: "/compliance", label: "Compliance (PROVOST)" },
+  ] },
   { title: "Reports", links: [
     { href: "/report/weekly", label: "Weekly report" },
     { href: "/reports", label: "All reports" },
