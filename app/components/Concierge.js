@@ -113,13 +113,16 @@ export default function Concierge() {
     try { recogRef.current && recogRef.current.stop(); } catch {}
   }, []);
 
-  const startVoice = useCallback(() => {
+  const startVoice = useCallback(async () => {
     const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
     if (!SR) { setVoiceOk(false); return; }
+    try { if (navigator.mediaDevices?.getUserMedia) { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach((t) => t.stop()); } }
+    catch { setVoiceOk("blocked"); return; }
+    setVoiceOk(true);
     const rec = new SR();
     rec.continuous = true; rec.interimResults = false; rec.lang = "en-US";
     rec.onresult = (e) => { const r = e.results[e.results.length - 1]; if (r && r[0]) handleHeard(r[0].transcript.trim()); };
-    rec.onerror = () => {};
+    rec.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { setVoiceOk("blocked"); stopVoice(); } };
     rec.onend = () => { if (voiceRef.current) { try { rec.start(); } catch {} } };
     recogRef.current = rec;
     voiceRef.current = true; setVoice(true); setOpen(true);
@@ -157,7 +160,8 @@ export default function Concierge() {
             </button>
             <button className="chip" onClick={summarize}>Summarize this page</button>
             {depth >= 0 && depth <= 3 && <button className="chip" onClick={deeper}>{LEVEL_LABEL[depth + 1] || "Go deeper"} →</button>}
-            {!voiceOk && <span className="voice-hint">Voice input isn't supported in this browser.</span>}
+            {voiceOk === false && <span className="voice-hint">Voice input needs Chrome or Edge. You can type instead.</span>}
+            {voiceOk === "blocked" && <span className="voice-hint">Mic blocked — click the lock icon in the address bar, allow microphone, then retry.</span>}
             {voice && heard && <span className="voice-hint">heard: “{heard}”</span>}
           </div>
           {msgs.length <= 1 && (
