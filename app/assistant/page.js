@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import Presenter from "../components/Presenter";
+import { useBernard } from "../components/Bernard";
 
 const SUGGEST = [
   "What's behind schedule right now?",
@@ -22,7 +22,7 @@ export default function Assistant() {
   const [msgs, setMsgs] = useState([{ role: "assistant", content: "I'm Bernard. I can answer anything about the program — schedule, cost, capacity, risks, the new field tools — and explain how the platform works. Ask me, or use a starter below." }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [speak, setSpeak] = useState(null);
+  const B = useBernard();
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
@@ -52,7 +52,7 @@ export default function Assistant() {
               <div key={i}>
                 <div className={`bubble ${m.role}`}>{m.content}</div>
                 {m.role === "assistant" && i > 0 && (
-                  <button className="chip" style={{ marginBottom: 10 }} onClick={() => setSpeak(m.content)}>▶ Bernard reads this</button>
+                  <button className="chip" style={{ marginBottom: 10 }} onClick={() => B?.speak(m.content)}>▶ Bernard reads this</button>
                 )}
               </div>
             ))}
@@ -82,7 +82,6 @@ export default function Assistant() {
       <div className="notice" style={{ marginTop: 14 }}>
         Key-free demo answers the common questions from the live data. With an API key set, CONCIERGE answers anything using the full program context. In production it runs against the organization&apos;s internal model endpoint, so no project data leaves the tenant. Press <strong>Bernard reads this</strong> on any answer for the narrated avatar version.
       </div>
-      {speak && <Presenter mode="reply" text={speak} agent="BERNARD" onClose={() => setSpeak(null)} />}
     </div>
   );
 }
