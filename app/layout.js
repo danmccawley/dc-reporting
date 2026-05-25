@@ -3,6 +3,7 @@ import Nav from "./components/Nav";
 import Concierge from "./components/Concierge";
 import CoachTip from "./components/CoachTip";
 import { RoleProvider } from "./components/RoleProvider";
+import { PreferencesProvider } from "./components/Preferences";
 
 export const metadata = {
   title: "DC Reporting — Generic Program",
@@ -21,10 +22,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <RoleProvider>
-          <Nav />
-          <main className="wrap page">{children}</main>
-          <Concierge />
-          <CoachTip />
+          <PreferencesProvider>
+            <Nav />
+            <main className="wrap page">{children}</main>
+            <Concierge />
+            <CoachTip />
+          </PreferencesProvider>
         </RoleProvider>
       </body>
     </html>

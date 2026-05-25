@@ -10,7 +10,7 @@ const GROUPS = [
   { title: "Overview", links: [
     { href: "/", label: "Executive" },
     { href: "/capacity", label: "Capacity" },
-    { href: "/insights", label: "Insights" },
+    { href: "/insights", label: "Business intelligence" },
     { href: "/maps", label: "Maps" },
     { href: "/drawings", label: "Drawings & models" },
   ] },
@@ -58,6 +58,7 @@ const GROUPS = [
   ] },
   { title: "Tools & admin", links: [
     { href: "/providers", label: "Provider registry" },
+    { href: "/preferences", label: "Preferences" },
     { href: "/analyze", label: "Documents", cap: "counsel" },
     { href: "/admin", label: "Admin", cap: "users" },
     { href: "/field", label: "Field (PWA)" },
