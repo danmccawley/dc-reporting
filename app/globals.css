@@ -501,3 +501,24 @@ a.stat:hover { border-color: var(--accent); }
 .presenter-reply input { flex: 1; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
 .presenter-reply .btn { padding: 9px 14px; }
 .presenter-reply .voice-btn { white-space: nowrap; }
+
+/* ── Voice-first capture (VoiceDailyForm) ───────────────────────────────── */
+.vcap { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 6px; }
+.vcap-mic { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 9px; font-family: inherit; font-size: 16px; font-weight: 600; padding: 16px; border-radius: 12px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; }
+.vcap-mic:hover { background: rgba(47,72,88,.06); }
+.vcap-mic.on { background: #A32D2D; border-color: #A32D2D; color: #fff; }
+.vcap-mic:disabled { opacity: .55; cursor: default; }
+.vcap-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.vcap-transcript { margin-top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 15px; line-height: 1.5; min-height: 64px; color: var(--ink); }
+.vcap-interim { color: var(--faint); }
+.vcap-placeholder { color: var(--faint); font-style: italic; }
+.vcap-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.vcap-note { margin-top: 10px; font-size: 13px; color: var(--g-ink); background: var(--g-bg); border-radius: 8px; padding: 8px 11px; }
+.vcap-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0 6px; color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.vcap-divider::before, .vcap-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.herald-tag { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--g); background: var(--g-bg); padding: 1px 6px; border-radius: 5px; margin-left: 6px; }
+.herald-fill { border-color: var(--g) !important; box-shadow: 0 0 0 3px rgba(90,138,31,.10); }
+.cellpill.s-g { background: var(--g-bg); color: var(--g-ink); }
+.cellpill.s-a { background: var(--a-bg); color: var(--a-ink); }
+.cellpill.s-r { background: var(--r-bg); color: var(--r-ink); }
+.cellpill.s-n { background: var(--n-bg); color: var(--n-ink); }

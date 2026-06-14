@@ -25,6 +25,7 @@ const GROUPS = [
     { href: "/lookahead", label: "Look-ahead" },
   ] },
   { title: "Field operations", links: [
+    { href: "/voice-field", label: "Voice daily report" },
     { href: "/ops", label: "Operations hub" },
     { href: "/rfis", label: "RFIs & submittals" },
     { href: "/manpower", label: "Manpower" },
@@ -45,6 +46,7 @@ const GROUPS = [
     { href: "/compliance", label: "Compliance (PROVOST)" },
   ] },
   { title: "Reports", links: [
+    { href: "/request", label: "Request a report" },
     { href: "/report/weekly", label: "Weekly report" },
     { href: "/reports", label: "All reports" },
   ] },
