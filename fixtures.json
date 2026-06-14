@@ -1,0 +1,183 @@
+{
+  "capture": {
+    "id": "cap_b17_e401",
+    "kind": "drawing_sheet",
+    "source": "upload",
+    "uri": "blob://e401-revc.pdf",
+    "building": "17",
+    "sheetNumber": "E-401",
+    "discipline": "Electrical",
+    "titleblockBox": {
+      "x": 0.7,
+      "y": 0.82,
+      "w": 0.28,
+      "h": 0.16
+    },
+    "offlineCached": true,
+    "capturedAt": "2026-06-14T15:00:00Z",
+    "author": "D. McCawley"
+  },
+  "point": {
+    "id": "rp1",
+    "captureId": "cap_b17_e401",
+    "n": 1,
+    "x": 0.42,
+    "y": 0.18,
+    "coordSpace": "titleblock_normalized",
+    "label": "MV switchgear lineup"
+  },
+  "noteLinked": {
+    "id": "n1",
+    "text": "Switchgear set on grid B; awaiting terminations.",
+    "inputMode": "voice",
+    "referencePointId": "rp1",
+    "reportId": "rep_b17_0614",
+    "createdAt": "2026-06-14T15:01:00Z"
+  },
+  "noteStandalone": {
+    "id": "n2",
+    "text": "East laydown restacked after delivery.",
+    "inputMode": "text",
+    "referencePointId": null,
+    "reportId": "rep_b17_0614",
+    "createdAt": "2026-06-14T15:05:00Z"
+  },
+  "system": {
+    "id": "sys_b17_elec",
+    "name": "Electrical",
+    "discipline": "Electrical",
+    "building": "17"
+  },
+  "zone": {
+    "id": "zb1",
+    "zoneId": "z_mmr",
+    "captureId": "cap_b17_e401",
+    "systemId": "sys_b17_elec",
+    "building": "17",
+    "normalizedBox": {
+      "x": 0.1,
+      "y": 0.1,
+      "w": 0.3,
+      "h": 0.25
+    }
+  },
+  "punch": {
+    "id": "p1",
+    "systemId": "sys_b16_bms",
+    "level": 4,
+    "status": "open",
+    "description": "Controls point map incomplete on AHU-3."
+  },
+  "cxRecord": {
+    "id": "cx_b16_bms",
+    "systemId": "sys_b16_bms",
+    "building": "16",
+    "level": 3,
+    "tag": "green",
+    "plannedLevelForPeriod": 4,
+    "testDate": "2026-06-10",
+    "signoffs": [
+      {
+        "by": "J. Cx",
+        "role": "CxA",
+        "at": "2026-06-10"
+      }
+    ],
+    "openPunchIds": [
+      "p1"
+    ]
+  },
+  "activity": {
+    "id": "act_b17_elec",
+    "systemId": "sys_b17_elec",
+    "building": "17",
+    "name": "Electrical fit-out",
+    "plannedFinish": 120,
+    "forecastFinish": 129,
+    "pct": 33,
+    "critical": true,
+    "gatingId": "act_switchgear"
+  },
+  "massing": {
+    "id": "mm_b17",
+    "building": "17",
+    "levels": [
+      {
+        "name": "Data Hall 2",
+        "footprint": [
+          [
+            0.1,
+            0.1
+          ],
+          [
+            0.9,
+            0.1
+          ],
+          [
+            0.9,
+            0.8
+          ],
+          [
+            0.1,
+            0.8
+          ]
+        ],
+        "floorToFloor": 7.2,
+        "confirmedBy": "D. McCawley"
+      }
+    ],
+    "statusOverlays": [
+      {
+        "systemId": "sys_b17_elec",
+        "levelName": "Data Hall 2",
+        "status": "behind"
+      }
+    ]
+  },
+  "template": {
+    "id": "tpl_owner_monthly",
+    "name": "Owner Monthly",
+    "source": "learned",
+    "slots": [
+      {
+        "key": "exec_summary",
+        "dataField": "narrative.summary",
+        "position": 0
+      },
+      {
+        "key": "safety_hours",
+        "dataField": null,
+        "position": 3
+      }
+    ],
+    "reviewedBy": "D. McCawley"
+  },
+  "snapshot": {
+    "reportId": "rep_b17_2026-05",
+    "cadence": "Monthly",
+    "period": "May 2026",
+    "building": "17",
+    "computedValues": {
+      "avgPct": 41,
+      "redScopes": 3
+    },
+    "sourceReportIds": [
+      "rep_b17_0601",
+      "rep_b17_0614"
+    ],
+    "narrativeEdits": [],
+    "numberOverrides": [],
+    "approvedBy": "D. McCawley",
+    "approvedAt": "2026-06-02T12:00:00Z",
+    "version": 1
+  },
+  "dist": {
+    "reportType": "Owner Monthly",
+    "defaultRecipients": [
+      "sandbox@example.com"
+    ],
+    "autoDeliver": true,
+    "channel": "both",
+    "sandbox": true
+  }
+}
