@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>System Startup Matrix — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1b1c18; --muted:#6c6b62; --faint:#9a988d; --line:#e4e2d8;
+    --surface:#fff; --surface-2:#f7f6f0; --bg:#faf9f3; --bar:#1d1e1a; --bar-ink:#e9e7dc; --accent:#2f4858;
+    /* commissioning tag system (industry convention, harmonized to platform palette) */
+    --l1-bg:#F7C1C1; --l1-ink:#501313;   /* L1 red  — factory testing */
+    --l2-bg:#FAC775; --l2-ink:#412402;   /* L2 yellow — install & pre-startup */
+    --l3-bg:#C0DD97; --l3-ink:#173404;   /* L3 green — systems start-up */
+    --l4-bg:#E6F1FB; --l4-ink:#0C447C;   /* L4 blue — functional testing */
+    --l5-bg:#ffffff; --l5-ink:#1b1c18;   /* L5 white — integrated testing */
+    --l0-bg:#efede6; --l0-ink:#7c7b74;   /* pre-L1 — construction run-up */
+    --behind:#b23030;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum"}
+  .topbar{background:var(--bar);color:var(--bar-ink);position:sticky;top:0;z-index:20;border-bottom:1px solid #000}
+  .topbar .row{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:14px;height:56px;padding:0 18px}
+  .brand{font-weight:700;font-size:15px}
+  .brand small{display:block;font-weight:400;font-size:10px;color:#a7a59a;letter-spacing:.06em;text-transform:uppercase}
+  .spacer{flex:1}
+  .proto{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#1b1c18;background:var(--l2-bg);padding:4px 9px;border-radius:6px;font-weight:700}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 18px 64px}
+  .eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  h1{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:3px 0 1px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+
+  .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .stat{background:var(--surface-2);border-radius:var(--radius);padding:13px 15px}
+  .stat .k{font-size:12px;color:var(--muted)}
+  .stat .v{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .lchip{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px}
+  .ltag{width:22px;height:18px;border-radius:5px;border:1px solid rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
+
+  /* filter chips */
+  .filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+  .fchip{font-family:inherit;font-size:13px;font-weight:600;padding:7px 13px;border:1px solid var(--line);background:var(--surface);border-radius:20px;cursor:pointer;color:var(--muted)}
+  .fchip.on{background:var(--bar);color:var(--bar-ink);border-color:var(--bar)}
+  .fchip.behind.on{background:var(--behind);border-color:var(--behind);color:#fff}
+
+  /* matrix */
+  .matrix{width:100%;border-collapse:separate;border-spacing:8px;margin-bottom:8px}
+  .matrix th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;text-align:center;padding:4px}
+  .matrix th.rowh{text-align:left;width:170px}
+  .syscell{text-align:left;font-size:14px;font-weight:600;padding:6px 4px}
+  .syscell .disc{font-size:11px;color:var(--faint);font-weight:400}
+  .cell{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 10px;cursor:pointer;text-align:center;transition:transform .08s;position:relative}
+  .cell:hover{transform:translateY(-2px);border-color:var(--accent)}
+  .cell.sel{outline:2px solid var(--accent);outline-offset:1px}
+  .cell.behind{outline:2px solid var(--behind);outline-offset:1px}
+  .cell.dim{opacity:.32}
+  .tag{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:30px;border-radius:7px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;border:1px solid rgba(0,0,0,.1)}
+  .lvl-label{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.3}
+  .behind-pill{position:absolute;top:-8px;right:-6px;background:var(--behind);color:#fff;font-size:9px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 6px;border-radius:6px}
+  .gate-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--behind);margin-left:5px;vertical-align:1px}
+
+  /* detail panel */
+  .detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:0;margin-top:14px;overflow:hidden}
+  .detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .detail-head .title{font-size:16px;font-weight:700}
+  .detail-head .titlesub{font-size:13px;color:var(--muted)}
+  .detail-body{padding:14px 16px}
+  .levelbar{display:flex;gap:5px;margin:4px 0 14px}
+  .lstep{flex:1;text-align:center;padding:7px 0;border-radius:7px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,0,0,.08)}
+  .lstep.future{background:var(--surface-2);color:var(--faint);border-style:dashed}
+  .lstep.planned-marker{outline:2px solid var(--accent);outline-offset:1px}
+  .drow{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .drow:last-of-type{border-bottom:none}
+  .drow .k{color:var(--muted)}
+  .gate{background:#fcecec;border:1px solid var(--l1-bg);border-left:3px solid var(--behind);border-radius:0 8px 8px 0;padding:11px 13px;margin-top:12px}
+  .gate h4{margin:0 0 6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--behind)}
+  .gate ul{margin:0;padding-left:18px;font-size:13px;color:#5a2020}
+  .gate ul li{margin:3px 0}
+  .gate .ok{color:var(--l3-ink);font-size:13px}
+  .empty{padding:22px 16px;color:var(--muted);font-size:14px;text-align:center}
+  .note-foot{font-size:12px;color:var(--faint);margin-top:14px}
+</style>
+</head>
+<body>
+  <div class="topbar"><div class="row">
+    <div class="brand">DC Field Reporting<small>System Startup Matrix · L1–L5</small></div>
+    <div class="spacer"></div><span class="proto">Prototype · synthetic data</span>
+  </div></div>
+
+  <div class="wrap">
+    <div class="eyebrow">Delivery spine</div>
+    <h1>Commissioning status — by system & building</h1>
+    <p class="sub">Each system advances L1→L5 independently. Construction is the run-up to L1. A level can’t advance while punch items for the next level are open.</p>
+
+    <div class="summary" id="summary"></div>
+
+    <div class="legend">
+      <span class="lchip"><span class="ltag" style="background:var(--l1-bg);color:var(--l1-ink)">1</span>Factory</span>
+      <span class="lchip"><span class="ltag" style="background:var(--l2-bg);color:var(--l2-ink)">2</span>Install & pre-startup</span>
+      <span class="lchip"><span class="ltag" style="background:var(--l3-bg);color:var(--l3-ink)">3</span>Start-up</span>
+      <span class="lchip"><span class="ltag" style="background:var(--l4-bg);color:var(--l4-ink)">4</span>Functional</span>
+      <span class="lchip"><span class="ltag" style="background:var(--l5-bg);color:var(--l5-ink)">5</span>Integrated</span>
+      <span class="lchip"><span class="ltag" style="background:var(--l0-bg);color:var(--l0-ink)">·</span>Pre-L1 / construction</span>
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    <table class="matrix" id="matrix"></table>
+
+    <div class="detail" id="detail"><div class="empty">Tap any cell to see its level, the planned level, and the punch items gating the next gate.</div></div>
+
+    <div class="note-foot">Behind = current level below the planned level for this period. Status here is computed; the same value colors the system’s zones on the drawing and its region on the 3D massing view.</div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var LEVELS = [
+    {n:0,bg:"--l0-bg",ink:"--l0-ink",label:"Pre-L1"},
+    {n:1,bg:"--l1-bg",ink:"--l1-ink",label:"Factory"},
+    {n:2,bg:"--l2-bg",ink:"--l2-ink",label:"Install"},
+    {n:3,bg:"--l3-bg",ink:"--l3-ink",label:"Start-up"},
+    {n:4,bg:"--l4-bg",ink:"--l4-ink",label:"Functional"},
+    {n:5,bg:"--l5-bg",ink:"--l5-ink",label:"Integrated"}
+  ];
+  var BUILDINGS = [{id:"16",name:"Building 16",phase:"Closeout"},{id:"17",name:"Building 17",phase:"Fit-out"},{id:"18",name:"Building 18",phase:"Structure"}];
+  var SYSTEMS = ["Electrical","Mechanical / cooling","Controls / BMS","Fire / life-safety","LV / cabling"];
+  var DISC = {"Electrical":"Electrical","Mechanical / cooling":"Mechanical","Controls / BMS":"Controls","Fire / life-safety":"Fire/Life-safety","LV / cabling":"Low voltage"};
+
+  // cells[system][building] = {level, planned, punches:[{level,desc}], note}
+  var C = {
+    "Electrical":{
+      "16":{level:5,planned:5,punches:[]},
+      "17":{level:1,planned:2,punches:[{level:2,desc:"MV switchgear lineup not yet on site (delivery at risk — SENTINEL)"},{level:2,desc:"Feeder terminations incomplete, grid B"}],note:"Gated by switchgear delivery; L2 blocked."},
+      "18":{level:0,planned:0,punches:[]}
+    },
+    "Mechanical / cooling":{
+      "16":{level:4,planned:4,punches:[]},
+      "17":{level:2,planned:2,punches:[]},
+      "18":{level:0,planned:0,punches:[]}
+    },
+    "Controls / BMS":{
+      "16":{level:3,planned:4,punches:[{level:4,desc:"Point map incomplete on AHU-3"},{level:4,desc:"BMS graphics not loaded for MMR"},{level:4,desc:"Alarm setpoints unverified, CRAH 1–3"}],note:"Densest open list; practical gate on L4 functional testing."},
+      "17":{level:0,planned:1,punches:[{level:1,desc:"Controllers not yet delivered (FAT pending)"}],note:"Pre-L1; construction run-up behind plan."},
+      "18":{level:0,planned:0,punches:[]}
+    },
+    "Fire / life-safety":{
+      "16":{level:4,planned:4,punches:[]},
+      "17":{level:1,planned:1,punches:[]},
+      "18":{level:0,planned:0,punches:[]}
+    },
+    "LV / cabling":{
+      "16":{level:5,planned:5,punches:[]},
+      "17":{level:1,planned:2,punches:[{level:2,desc:"Backbone pull held pending RFI-118 response"}],note:"RFI turnaround (9.2d vs 6.1d avg) gating L2."},
+      "18":{level:0,planned:0,punches:[]}
+    }
+  };
+
+  var cssv = function(v){return getComputedStyle(document.documentElement).getPropertyValue(v);};
+  var filter = {disc:"all", behindOnly:false};
+  var sel = null;
+
+  function isBehind(c){return c.level < c.planned;}
+  function tagStyle(level){var L=LEVELS[level];return "background:var("+L.bg+");color:var("+L.ink+")";}
+
+  function renderSummary(){
+    var behind=0, atL5=0, gates=0;
+    SYSTEMS.forEach(function(s){BUILDINGS.forEach(function(b){var c=C[s][b.id]; if(isBehind(c))behind++; if(c.level===5)atL5++; if(c.punches.length)gates++;});});
+    document.getElementById("summary").innerHTML =
+      stat("Systems behind plan", behind, "var(--behind)") +
+      stat("Open commissioning gates", gates, "") +
+      stat("Systems at L5", atL5, "var(--l3-ink)");
+  }
+  function stat(k,v,col){return '<div class="stat"><div class="k">'+k+'</div><div class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div>';}
+
+  function renderFilters(){
+    var chips=[["all","All systems"],["Electrical","Electrical"],["Mechanical","Mechanical"],["Controls","Controls"]];
+    var html = chips.map(function(c){return '<button class="fchip'+(filter.disc===c[0]?' on':'')+'" data-disc="'+c[0]+'">'+c[1]+'</button>';}).join("");
+    html += '<button class="fchip behind'+(filter.behindOnly?' on':'')+'" data-behind="1">Behind only</button>';
+    var f=document.getElementById("filters"); f.innerHTML=html;
+    f.querySelectorAll("[data-disc]").forEach(function(b){b.onclick=function(){filter.disc=b.dataset.disc; renderFilters(); renderMatrix();};});
+    f.querySelector("[data-behind]").onclick=function(){filter.behindOnly=!filter.behindOnly; renderFilters(); renderMatrix();};
+  }
+
+  function visibleSystems(){
+    return SYSTEMS.filter(function(s){return filter.disc==="all" || DISC[s].indexOf(filter.disc)===0 || (filter.disc==="Mechanical"&&s.indexOf("Mechanical")===0) || (filter.disc==="Controls"&&s.indexOf("Controls")===0) || (filter.disc==="Electrical"&&s==="Electrical");});
+  }
+
+  function renderMatrix(){
+    var sys = visibleSystems();
+    var head = '<tr><th class="rowh">System</th>' + BUILDINGS.map(function(b){return '<th>'+b.name+'<br><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--faint)">'+b.phase+'</span></th>';}).join("") + '</tr>';
+    var rows = sys.map(function(s){
+      var cells = BUILDINGS.map(function(b){
+        var c=C[s][b.id]; var beh=isBehind(c); var L=LEVELS[c.level];
+        var dim = filter.behindOnly && !beh;
+        var key=s+"|"+b.id;
+        return '<td><div class="cell'+(beh?' behind':'')+(dim?' dim':'')+(sel===key?' sel':'')+'" data-key="'+key+'">'
+          + (beh?'<span class="behind-pill">behind</span>':'')
+          + '<span class="tag" style="'+tagStyle(c.level)+'">'+(c.level===0?'·':'L'+c.level)+'</span>'
+          + '<div class="lvl-label">'+L.label+(c.punches.length?'<span class="gate-dot" title="open gate"></span>':'')+'</div>'
+          + '</div></td>';
+      }).join("");
+      return '<tr><td class="syscell">'+s+'<div class="disc">'+DISC[s]+'</div></td>'+cells+'</tr>';
+    }).join("");
+    document.getElementById("matrix").innerHTML = head + rows;
+    document.querySelectorAll(".cell[data-key]").forEach(function(el){el.onclick=function(){sel=el.dataset.key; renderMatrix(); renderDetail();};});
+  }
+
+  function renderDetail(){
+    if(!sel){return;}
+    var parts=sel.split("|"); var s=parts[0]; var bid=parts[1];
+    var c=C[s][bid]; var b=BUILDINGS.filter(function(x){return x.id===bid;})[0];
+    var beh=isBehind(c);
+    var steps = LEVELS.slice(1).map(function(L){
+      var reached = c.level>=L.n;
+      var planned = c.planned===L.n;
+      var st = reached ? 'style="'+tagStyle(L.n)+'"' : 'class="lstep future"';
+      return '<div class="lstep'+(reached?'':' future')+(planned?' planned-marker':'')+'" '+(reached?'style="'+tagStyle(L.n)+'"':'')+'>L'+L.n+'</div>';
+    }).join("");
+    var nextGate = c.punches.length
+      ? '<div class="gate"><h4>Gate to L'+(c.level+1)+' — '+c.punches.length+' open punch item'+(c.punches.length>1?'s':'')+' (fail-on-no)</h4><ul>'+c.punches.map(function(p){return '<li>'+p.desc+'</li>';}).join("")+'</ul></div>'
+      : (c.level>=5 ? '<div class="gate" style="background:#eef5e3;border-color:var(--l3-bg);border-left-color:var(--l3-ink)"><h4 style="color:var(--l3-ink)">Fully integrated (L5)</h4><span class="ok">All levels complete and signed off.</span></div>'
+        : '<div class="gate" style="background:#eef5e3;border-color:var(--l3-bg);border-left-color:var(--l3-ink)"><h4 style="color:var(--l3-ink)">No open gate</h4><span class="ok">Clear to advance to L'+(c.level+1)+'.</span></div>');
+    document.getElementById("detail").innerHTML =
+      '<div class="detail-head"><div><div class="title">'+s+' — '+b.name+'</div>'
+      + '<div class="titlesub">'+DISC[s]+' · '+b.phase+(beh?' · <span style="color:var(--behind);font-weight:600">behind plan</span>':'')+'</div></div>'
+      + '<span class="tag" style="'+tagStyle(c.level)+';min-width:54px;height:34px">'+(c.level===0?'pre-L1':'L'+c.level)+'</span></div>'
+      + '<div class="detail-body">'
+      + '<div class="levelbar">'+steps+'</div>'
+      + '<div class="drow"><span class="k">Current level</span><span>'+(c.level===0?'Pre-L1 (construction run-up)':'L'+c.level+' · '+LEVELS[c.level].label)+'</span></div>'
+      + '<div class="drow"><span class="k">Planned for this period</span><span>'+(c.planned===0?'Pre-L1':'L'+c.planned)+'</span></div>'
+      + '<div class="drow"><span class="k">Status</span><span style="color:'+(beh?'var(--behind)':'var(--l3-ink)')+';font-weight:600">'+(beh?'Behind by '+(c.planned-c.level)+' level'+((c.planned-c.level)>1?'s':''):'On plan')+'</span></div>'
+      + (c.note?'<div class="drow"><span class="k">Note</span><span style="max-width:60%;text-align:right">'+c.note+'</span></div>':'')
+      + nextGate
+      + '</div>';
+  }
+
+  renderSummary(); renderFilters(); renderMatrix();
+})();
+</script>
+</body>
+</html>

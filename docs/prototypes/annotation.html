@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Field Annotation — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1b1c18; --muted:#6c6b62; --faint:#9a988d; --line:#e4e2d8;
+    --surface:#fff; --surface-2:#f7f6f0; --bg:#faf9f3; --bar:#1d1e1a; --bar-ink:#e9e7dc;
+    --accent:#2f4858;
+    --g:#5a8a1f; --g-bg:#C0DD97; --a:#b9810f; --a-bg:#FAC775; --r:#b23030; --r-bg:#F7C1C1;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Hanken Grotesk',system-ui,sans-serif; font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum"}
+
+  /* command bar */
+  .topbar{background:var(--bar);color:var(--bar-ink);position:sticky;top:0;z-index:20;border-bottom:1px solid #000}
+  .topbar .row{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;height:56px;padding:0 18px}
+  .brand{font-weight:700;letter-spacing:-.01em;font-size:15px}
+  .brand small{display:block;font-weight:400;font-size:10px;color:#a7a59a;letter-spacing:.06em;text-transform:uppercase}
+  .spacer{flex:1}
+  .proto{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#1b1c18;background:var(--a-bg);padding:4px 9px;border-radius:6px;font-weight:700}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:18px 18px 60px}
+
+  /* field header */
+  .fieldhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  h1{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:3px 0 1px}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+
+  /* capture toggle */
+  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
+  .seg button{font-family:inherit;font-size:13px;font-weight:600;padding:7px 13px;border:none;background:none;border-radius:7px;cursor:pointer;color:var(--muted)}
+  .seg button.on{background:var(--bar);color:var(--bar-ink)}
+
+  /* two-column workspace */
+  .work{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start}
+  @media (max-width:820px){.work{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:0;overflow:hidden}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .card-head h2{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0}
+  .hint{font-size:12px;color:var(--faint)}
+
+  /* canvas */
+  .stage{position:relative;background:var(--surface-2);line-height:0;touch-action:manipulation}
+  .stage svg{width:100%;height:auto;display:block;user-select:none}
+  .stage .surface-tag{position:absolute;top:8px;left:8px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:rgba(27,28,24,.66);padding:3px 8px;border-radius:6px;z-index:3}
+  .drop-hint{position:absolute;inset:auto 0 0 0;text-align:center;font-size:12px;color:var(--muted);background:linear-gradient(to top,var(--surface) 60%,transparent);padding:18px 0 8px;pointer-events:none;z-index:2}
+
+  /* pins */
+  .pin{position:absolute;transform:translate(-50%,-50%);z-index:4;cursor:pointer;width:26px;height:26px;border-radius:50% 50% 50% 2px;background:var(--accent);border:2px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;animation:drop .26s cubic-bezier(.2,1.1,.4,1) both}
+  .pin:focus-visible{outline:3px solid var(--a-bg);outline-offset:2px}
+  .pin.sel{background:var(--r);transform:translate(-50%,-50%) scale(1.12)}
+  .pin.note{border-color:var(--a-bg)}
+  @keyframes drop{from{opacity:0;transform:translate(-50%,-160%) scale(.4)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+  @media (prefers-reduced-motion:reduce){.pin{animation:none}}
+
+  /* point composer popover */
+  .composer{position:absolute;z-index:9;width:248px;max-width:78vw;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.22);padding:12px;line-height:1.45}
+  .composer .lab{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+  .composer textarea{width:100%;font-family:inherit;font-size:14px;padding:9px;border:1px solid var(--line);border-radius:8px;resize:vertical;min-height:62px;margin:7px 0;color:var(--ink);background:var(--surface)}
+  .composer textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,72,88,.12)}
+  .composer .coord{font-size:11px;color:var(--faint);margin-bottom:6px}
+  .composer .acts{display:flex;gap:7px;align-items:center}
+
+  .btn{font-family:inherit;font-size:13px;font-weight:600;padding:9px 13px;border-radius:8px;border:1px solid var(--bar);background:var(--bar);color:var(--bar-ink);cursor:pointer}
+  .btn:hover{opacity:.92}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn.sm{padding:7px 11px;font-size:12px}
+  .btn:disabled{opacity:.45;cursor:default}
+
+  /* mic */
+  .mic{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:20px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink);white-space:nowrap}
+  .mic.on{background:var(--r);color:#fff;border-color:var(--r)}
+  .mic .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .mic.on .dot{animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+  /* report panel */
+  .report{padding:0}
+  .composer-inline{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  .composer-inline .lab{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .composer-inline .field-row{display:flex;gap:7px;align-items:flex-end}
+  .composer-inline textarea{flex:1;font-family:inherit;font-size:14px;padding:9px;border:1px solid var(--line);border-radius:8px;resize:vertical;min-height:42px;color:var(--ink);background:var(--surface)}
+  .composer-inline textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,72,88,.12)}
+
+  .atoms{max-height:430px;overflow-y:auto}
+  .atom{padding:12px 14px;border-bottom:1px solid var(--line);animation:slidein .22s ease both}
+  .atom:last-child{border-bottom:none}
+  @keyframes slidein{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.atom{animation:none}}
+  .atom-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;width:22px;height:22px;border-radius:50% 50% 50% 2px;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .badge.free{border-radius:6px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line);width:auto;padding:0 7px;font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+  .atom-kind{font-size:12px;color:var(--muted);font-weight:600}
+  .atom-mode{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(47,72,88,.08);padding:2px 7px;border-radius:5px;font-weight:700;margin-left:auto}
+  .atom-mode.voice{color:#7a3b8a;background:rgba(122,59,138,.1)}
+  .atom-body{font-size:14px;color:#33332e;margin:3px 0 4px}
+  .atom-body.empty{color:var(--faint);font-style:italic}
+  .atom-meta{font-size:11px;color:var(--faint)}
+  .atom .x{float:right;border:none;background:none;color:var(--faint);font-size:16px;cursor:pointer;line-height:1;padding:0 2px}
+  .atom .x:hover{color:var(--r)}
+
+  .empty-state{padding:30px 18px;text-align:center;color:var(--muted);font-size:14px}
+  .empty-state .big{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px}
+
+  .summary{display:flex;gap:14px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+  .summary .stat .n{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .summary .stat .k{font-size:11px;color:var(--muted)}
+
+  .provenance{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 13px;margin-top:14px}
+  .provenance b{color:var(--ink);font-weight:600}
+
+  .foot{margin-top:16px;font-size:12px;color:var(--faint);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .foot .tag{border:1px solid var(--line);border-radius:6px;padding:2px 8px;background:var(--surface)}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="row">
+      <div class="brand">DC Field Reporting<small>Annotation engine · Slice 1</small></div>
+      <div class="spacer"></div>
+      <span class="proto">Prototype · synthetic data</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="fieldhead">
+      <div>
+        <div class="eyebrow">Daily field report</div>
+        <h1>Building 17 · Data Hall 2</h1>
+        <p class="sub" id="datesub"></p>
+      </div>
+      <div class="seg" role="tablist" aria-label="Capture type">
+        <button id="tab-drawing" class="on" role="tab" aria-selected="true">Drawing</button>
+        <button id="tab-photo" role="tab" aria-selected="false">Site photo</button>
+      </div>
+    </div>
+
+    <div class="work">
+      <!-- CANVAS -->
+      <div class="card">
+        <div class="card-head">
+          <h2 id="canvas-title">Construction drawing · E-401 Rev C</h2>
+          <span class="hint" id="canvas-hint">Tap anywhere to drop a reference point</span>
+        </div>
+        <div class="stage" id="stage" tabindex="0" aria-label="Annotation canvas — activate to drop a point">
+          <span class="surface-tag" id="surface-tag">E-401 · titleblock-aligned</span>
+          <!-- SVG injected by JS -->
+          <div class="drop-hint" id="drophint">Tap the drawing to place point 1</div>
+        </div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="card report">
+        <div class="card-head">
+          <h2>Today’s report</h2>
+          <span class="hint">Everything you capture, nothing else</span>
+        </div>
+
+        <div class="summary">
+          <div class="stat"><div class="n mono" id="cnt-points">0</div><div class="k">Reference points</div></div>
+          <div class="stat"><div class="n mono" id="cnt-notes">0</div><div class="k">Notes</div></div>
+          <div class="stat"><div class="n mono" id="cnt-photos">1</div><div class="k">Captures</div></div>
+        </div>
+
+        <div class="composer-inline">
+          <div class="lab">Add a standalone note <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--faint)">(not tied to a point)</span></div>
+          <div class="field-row">
+            <textarea id="free-text" placeholder="Type, or dictate…"></textarea>
+            <button class="mic" id="free-mic" aria-pressed="false"><span class="dot"></span><span id="free-mic-label">Dictate</span></button>
+          </div>
+          <div style="margin-top:7px"><button class="btn sm" id="free-add">Add note</button></div>
+        </div>
+
+        <div class="atoms" id="atoms">
+          <div class="empty-state" id="empty">
+            <div class="big">No entries yet</div>
+            Drop a point on the drawing, or add a standalone note above.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="provenance">
+      <b>Provenance:</b> every entry here is something the CM placed or said — a point, or a note attached to one (or standing alone). The derived weekly / monthly / owner reports are computed from these atoms; the agent narrates them, it never invents a number. <span id="speech-note"></span>
+    </div>
+
+    <div class="foot">
+      <span class="tag">Capture → ReferencePoint → Note</span>
+      <span class="tag">Drawing points: titleblock-normalized (0–1)</span>
+      <span class="tag">Voice + text</span>
+      <span class="tag">Attached or standalone</span>
+      <span class="tag mono" id="offline">● cached offline</span>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  // ---- state (in-memory only) ----
+  var state = { surface:"drawing", points:[], notes:[], seq:0 };
+  var stage = document.getElementById("stage");
+  var atomsEl = document.getElementById("atoms");
+  var emptyEl = document.getElementById("empty");
+
+  document.getElementById("datesub").textContent =
+    new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}) + " · CM: D. McCawley";
+
+  // ---- synthetic surfaces (original SVG, no copyrighted source) ----
+  function drawingSVG(){
+    return '<svg viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">'
+      + '<rect width="800" height="560" fill="#fbfaf5"/>'
+      // border + titleblock
+      + '<rect x="14" y="14" width="772" height="532" fill="none" stroke="#1b1c18" stroke-width="1.4"/>'
+      + '<rect x="556" y="446" width="216" height="86" fill="#fff" stroke="#1b1c18" stroke-width="1"/>'
+      + '<line x1="556" y1="470" x2="772" y2="470" stroke="#1b1c18" stroke-width=".7"/>'
+      + '<text x="564" y="464" font-size="11" fill="#1b1c18">ELECTRICAL ONE-LINE / EQUIP PLAN</text>'
+      + '<text x="564" y="488" font-size="10" fill="#6c6b62">SHEET E-401</text>'
+      + '<text x="690" y="488" font-size="10" fill="#6c6b62">REV C</text>'
+      + '<text x="564" y="506" font-size="9" fill="#9a988d">BUILDING 17 — DATA HALL 2</text>'
+      + '<text x="564" y="522" font-size="9" fill="#9a988d">IFC SET REV 3</text>'
+      // column grid
+      + grid()
+      // room outline
+      + '<rect x="92" y="78" width="430" height="330" fill="none" stroke="#1b1c18" stroke-width="1.6"/>'
+      + '<rect x="92" y="78" width="430" height="58" fill="#f1efe7" stroke="#1b1c18" stroke-width=".8"/>'
+      + '<text x="104" y="112" font-size="12" fill="#33332e">MMR / ELECTRICAL ROOM</text>'
+      // switchgear lineup
+      + gear(112,150) + gear(150,150) + gear(188,150) + gear(226,150)
+      + '<text x="112" y="210" font-size="9" fill="#6c6b62">MV SWITCHGEAR LINEUP</text>'
+      // CRAH units
+      + crah(330,170) + crah(330,250) + crah(330,330)
+      + '<text x="318" y="395" font-size="9" fill="#6c6b62">CRAH 1–3</text>'
+      // data hall floor
+      + '<rect x="112" y="250" width="170" height="140" fill="none" stroke="#9a988d" stroke-width=".8" stroke-dasharray="4 3"/>'
+      + '<text x="120" y="345" font-size="11" fill="#6c6b62">RACK ROWS</text>'
+      + tiles()
+      + '</svg>';
+  }
+  function grid(){
+    var s=""; var cols=["A","B","C","D","E"]; var x0=92, dx=108;
+    for(var i=0;i<cols.length;i++){ var x=x0+i*dx;
+      s+='<line x1="'+x+'" y1="64" x2="'+x+'" y2="420" stroke="#d9d6cb" stroke-width=".7"/>';
+      s+='<circle cx="'+x+'" cy="58" r="9" fill="#fff" stroke="#1b1c18" stroke-width=".8"/><text x="'+x+'" y="62" font-size="9" text-anchor="middle" fill="#1b1c18">'+cols[i]+'</text>';
+    }
+    var y0=110, dy=92;
+    for(var j=0;j<4;j++){ var y=y0+j*dy;
+      s+='<line x1="78" y1="'+y+'" x2="520" y2="'+y+'" stroke="#d9d6cb" stroke-width=".7"/>';
+      s+='<circle cx="70" cy="'+y+'" r="9" fill="#fff" stroke="#1b1c18" stroke-width=".8"/><text x="70" y="'+(y+3)+'" font-size="9" text-anchor="middle" fill="#1b1c18">'+(j+1)+'</text>';
+    }
+    return s;
+  }
+  function gear(x,y){ return '<rect x="'+x+'" y="'+y+'" width="32" height="44" fill="#eceae2" stroke="#1b1c18" stroke-width="1"/><line x1="'+x+'" y1="'+(y+12)+'" x2="'+(x+32)+'" y2="'+(y+12)+'" stroke="#1b1c18" stroke-width=".6"/>'; }
+  function crah(x,y){ return '<rect x="'+x+'" y="'+y+'" width="58" height="30" fill="#e7ecef" stroke="#2f4858" stroke-width="1"/><circle cx="'+(x+29)+'" cy="'+(y+15)+'" r="9" fill="none" stroke="#2f4858" stroke-width="1"/>'; }
+  function tiles(){ var s=""; for(var r=0;r<3;r++)for(var c=0;c<5;c++){ s+='<rect x="'+(120+c*30)+'" y="'+(262+r*40)+'" width="24" height="32" fill="none" stroke="#cfccc1" stroke-width=".6"/>';} return s; }
+
+  function photoSVG(){
+    return '<svg viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg">'
+      + '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcd0dd"/><stop offset="1" stop-color="#e7ecef"/></linearGradient></defs>'
+      + '<rect width="800" height="560" fill="url(#sky)"/>'
+      // ground / slab
+      + '<rect x="0" y="392" width="800" height="168" fill="#c9c4b6"/>'
+      + '<rect x="0" y="392" width="800" height="14" fill="#b9b3a3"/>'
+      // steel frame silhouette
+      + steelCol(120) + steelCol(300) + steelCol(480) + steelCol(660)
+      + '<rect x="112" y="150" width="556" height="16" fill="#6f6a60"/>'
+      + '<rect x="112" y="250" width="556" height="14" fill="#7d786d"/>'
+      // diagonal brace
+      + '<line x1="120" y1="392" x2="300" y2="150" stroke="#857f73" stroke-width="9"/>'
+      + '<line x1="660" y1="392" x2="480" y2="150" stroke="#857f73" stroke-width="9"/>'
+      // crane hint
+      + '<line x1="710" y1="60" x2="710" y2="392" stroke="#9a948688" stroke-width="6"/>'
+      + '<line x1="600" y1="70" x2="770" y2="70" stroke="#9a948688" stroke-width="6"/>'
+      + '<rect x="40" y="420" width="150" height="90" fill="#b3ac9c" stroke="#8f897b" stroke-width="2"/>' // material stack
+      + '<text x="20" y="544" font-size="13" font-family="JetBrains Mono, monospace" fill="#5b564c">Steel sequence 2 — east bay (synthetic)</text>'
+      + '</svg>';
+  }
+  function steelCol(x){ return '<rect x="'+(x-6)+'" y="150" width="12" height="246" fill="#787266"/>'; }
+
+  // ---- render canvas ----
+  function renderSurface(){
+    var isDraw = state.surface==="drawing";
+    var existing = stage.querySelector("svg"); if(existing) existing.remove();
+    stage.insertAdjacentHTML("afterbegin", isDraw ? drawingSVG() : photoSVG());
+    document.getElementById("canvas-title").textContent = isDraw ? "Construction drawing · E-401 Rev C" : "Site photo · east bay";
+    document.getElementById("surface-tag").textContent = isDraw ? "E-401 · titleblock-aligned" : "Site photo · image coords";
+    drawPins();
+  }
+
+  function drawPins(){
+    [].slice.call(stage.querySelectorAll(".pin")).forEach(function(p){p.remove();});
+    state.points.forEach(function(pt){
+      if(pt.surface!==state.surface) return;
+      var el = document.createElement("button");
+      el.className = "pin" + (pt.noteId?" note":"");
+      el.style.left = (pt.x*100)+"%"; el.style.top = (pt.y*100)+"%";
+      el.textContent = pt.n;
+      el.setAttribute("aria-label","Reference point "+pt.n+(pt.noteId?", has note":", no note"));
+      el.addEventListener("click", function(e){ e.stopPropagation(); openComposer(pt, el); });
+      stage.appendChild(el);
+    });
+    var dh = document.getElementById("drophint");
+    if(dh) dh.style.display = state.points.some(function(p){return p.surface===state.surface;}) ? "none":"block";
+  }
+
+  // ---- drop a point ----
+  stage.addEventListener("click", function(e){
+    if(e.target.closest(".pin")||e.target.closest(".composer")) return;
+    var r = stage.getBoundingClientRect();
+    var x = (e.clientX - r.left)/r.width, y = (e.clientY - r.top)/r.height;
+    if(x<0||x>1||y<0||y>1) return;
+    state.seq++;
+    var pt = { id:"rp"+state.seq, n:state.seq, x:x, y:y, surface:state.surface,
+               coordSpace: state.surface==="drawing"?"titleblock_normalized":"image", noteId:null };
+    state.points.push(pt);
+    drawPins();
+    render();
+    var el = stage.querySelector('.pin:nth-last-child(1)');
+    var pins = stage.querySelectorAll(".pin"); el = pins[pins.length-1];
+    openComposer(pt, el);
+  });
+
+  // ---- point composer popover ----
+  var activeComposer = null;
+  function closeComposer(){ if(activeComposer){activeComposer.remove(); activeComposer=null;} [].slice.call(stage.querySelectorAll(".pin.sel")).forEach(function(p){p.classList.remove("sel");}); }
+  function openComposer(pt, pinEl){
+    closeComposer();
+    if(pinEl) pinEl.classList.add("sel");
+    var existingNote = state.notes.find(function(nn){return nn.id===pt.noteId;});
+    var c = document.createElement("div");
+    c.className="composer";
+    c.innerHTML =
+      '<div class="lab">Point '+pt.n+'<button class="x" title="Remove point" style="border:none;background:none;color:var(--faint);font-size:15px;cursor:pointer">✕</button></div>'
+      + '<div class="coord mono">'+(pt.coordSpace==="titleblock_normalized"?"titleblock":"image")+' ('+pt.x.toFixed(3)+', '+pt.y.toFixed(3)+')</div>'
+      + '<textarea placeholder="Note for this point — type or dictate…">'+(existingNote?escapeHtml(existingNote.text):"")+'</textarea>'
+      + '<div class="acts"><button class="mic" data-mic aria-pressed="false"><span class="dot"></span><span data-miclabel>Dictate</span></button>'
+      + '<span class="spacer" style="flex:1"></span>'
+      + '<button class="btn sm" data-save>'+(existingNote?"Update":"Save note")+'</button></div>';
+    // position near pin, kept on-screen
+    var sr = stage.getBoundingClientRect();
+    var px = pt.x*sr.width, py = pt.y*sr.height;
+    var left = Math.min(Math.max(px+16, 8), sr.width-256);
+    var top = Math.min(Math.max(py-10, 8), sr.height-180);
+    c.style.left = left+"px"; c.style.top = top+"px";
+    stage.appendChild(c);
+    activeComposer = c;
+
+    var ta = c.querySelector("textarea"); ta.focus();
+    c.querySelector(".x").addEventListener("click", function(){ removePoint(pt); closeComposer(); });
+    c.querySelector("[data-save]").addEventListener("click", function(){
+      var txt = ta.value.trim();
+      if(txt){
+        if(existingNote){ existingNote.text = txt; existingNote.mode = lastMode||existingNote.mode; }
+        else { var nid="n"+(++state.seq); state.notes.push({id:nid, text:txt, mode:lastMode||"text", pointId:pt.id, surface:pt.surface, ts:Date.now()}); pt.noteId=nid; }
+      }
+      lastMode=null;
+      closeComposer(); drawPins(); render();
+    });
+    wireMic(c.querySelector("[data-mic]"), c.querySelector("[data-miclabel]"), ta);
+  }
+  function removePoint(pt){
+    state.points = state.points.filter(function(p){return p.id!==pt.id;});
+    state.notes = state.notes.filter(function(nn){return nn.pointId!==pt.id;});
+    // renumber
+    state.points.forEach(function(p,i){p.n=i+1;});
+    state.seq = state.points.length;
+    drawPins(); render();
+  }
+
+  // ---- standalone note ----
+  document.getElementById("free-add").addEventListener("click", function(){
+    var ta=document.getElementById("free-text"); var txt=ta.value.trim();
+    if(!txt) return;
+    state.notes.push({id:"n"+(++state.seq), text:txt, mode:freeMode||"text", pointId:null, surface:state.surface, ts:Date.now()});
+    ta.value=""; freeMode=null; render();
+  });
+
+  // ---- speech (key?OpenAI:local philosophy: real recognition if available, graceful fallback otherwise) ----
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var speechNote = document.getElementById("speech-note");
+  if(!SR){ speechNote.textContent = "Dictation here uses a local fallback transcript (this browser has no speech engine); in the field the OpenAI path transcribes live."; }
+  var lastMode=null, freeMode=null;
+  var FALLBACK = [
+    "Switchgear lineup set on grid B; awaiting final terminations.",
+    "CRAH 2 condensate routing conflicts with cable tray — flagged.",
+    "Rack rows 1–3 floor tiles placed; cutouts pending.",
+    "MV gear delivery confirmed on site, staged in MMR."
+  ];
+  function wireMic(btn,label,target,isFree){
+    if(!btn) return;
+    btn.addEventListener("click", function(){
+      if(SR){
+        if(btn.classList.contains("on")){ if(btn._rec) btn._rec.stop(); return; }
+        var rec = new SR(); btn._rec=rec; rec.lang="en-US"; rec.interimResults=true;
+        btn.classList.add("on"); btn.setAttribute("aria-pressed","true"); label.textContent="Listening…";
+        var base = target.value ? target.value+" " : "";
+        rec.onresult=function(ev){ var t=""; for(var i=ev.resultIndex;i<ev.results.length;i++) t+=ev.results[i][0].transcript; target.value=base+t; };
+        rec.onerror=function(){ stop(); fallbackInsert(target); };
+        rec.onend=stop;
+        function stop(){ btn.classList.remove("on"); btn.setAttribute("aria-pressed","false"); label.textContent="Dictate"; if(isFree)freeMode="voice"; else lastMode="voice"; }
+        try{ rec.start(); }catch(e){ stop(); fallbackInsert(target); }
+      } else {
+        fallbackInsert(target); if(isFree)freeMode="voice"; else lastMode="voice";
+        btn.classList.add("on"); label.textContent="Captured";
+        setTimeout(function(){ btn.classList.remove("on"); label.textContent="Dictate"; },900);
+      }
+    });
+  }
+  function fallbackInsert(target){
+    var s = FALLBACK[Math.floor(Math.random()*FALLBACK.length)];
+    target.value = (target.value? target.value+" ":"") + s;
+  }
+  wireMic(document.getElementById("free-mic"), document.getElementById("free-mic-label"), document.getElementById("free-text"), true);
+
+  // ---- render report ----
+  function render(){
+    document.getElementById("cnt-points").textContent = state.points.length;
+    document.getElementById("cnt-notes").textContent = state.notes.length;
+    // build ordered atom list: points (with their note) + standalone notes, by creation
+    var rows = [];
+    state.points.forEach(function(pt){
+      var nt = state.notes.find(function(nn){return nn.id===pt.noteId;});
+      rows.push({kind:"point", pt:pt, note:nt});
+    });
+    state.notes.filter(function(nn){return !nn.pointId;}).forEach(function(nn){
+      rows.push({kind:"free", note:nn});
+    });
+
+    if(!rows.length){ emptyEl.style.display="block"; [].slice.call(atomsEl.querySelectorAll(".atom")).forEach(function(a){a.remove();}); return; }
+    emptyEl.style.display="none";
+    [].slice.call(atomsEl.querySelectorAll(".atom")).forEach(function(a){a.remove();});
+
+    rows.forEach(function(row){
+      var el=document.createElement("div"); el.className="atom";
+      if(row.kind==="point"){
+        var pt=row.pt, nt=row.note;
+        el.innerHTML =
+          '<button class="x" title="Remove">✕</button>'
+          + '<div class="atom-top"><span class="badge">'+pt.n+'</span>'
+          + '<span class="atom-kind">Reference point · '+(pt.surface==="drawing"?"E-401":"site photo")+'</span>'
+          + (nt?'<span class="atom-mode '+(nt.mode==="voice"?"voice":"")+'">'+(nt.mode==="voice"?"voice":"typed")+'</span>':'')
+          + '</div>'
+          + (nt?'<div class="atom-body">'+escapeHtml(nt.text)+'</div>':'<div class="atom-body empty">Point marked — no note attached</div>')
+          + '<div class="atom-meta mono">'+(pt.coordSpace==="titleblock_normalized"?"titleblock":"image")+' ('+pt.x.toFixed(3)+', '+pt.y.toFixed(3)+')</div>';
+        el.querySelector(".x").addEventListener("click", function(){ removePoint(pt); });
+      } else {
+        var nn=row.note;
+        el.innerHTML =
+          '<button class="x" title="Remove">✕</button>'
+          + '<div class="atom-top"><span class="badge free">note</span>'
+          + '<span class="atom-kind">Standalone note</span>'
+          + '<span class="atom-mode '+(nn.mode==="voice"?"voice":"")+'">'+(nn.mode==="voice"?"voice":"typed")+'</span></div>'
+          + '<div class="atom-body">'+escapeHtml(nn.text)+'</div>'
+          + '<div class="atom-meta">not linked to a point</div>';
+        el.querySelector(".x").addEventListener("click", function(){ state.notes=state.notes.filter(function(z){return z.id!==nn.id;}); render(); });
+      }
+      atomsEl.appendChild(el);
+    });
+  }
+
+  function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+
+  // ---- surface toggle ----
+  function setSurface(s){
+    state.surface=s; closeComposer();
+    document.getElementById("tab-drawing").classList.toggle("on", s==="drawing");
+    document.getElementById("tab-photo").classList.toggle("on", s==="photo");
+    document.getElementById("tab-drawing").setAttribute("aria-selected", s==="drawing");
+    document.getElementById("tab-photo").setAttribute("aria-selected", s==="photo");
+    document.getElementById("canvas-hint").textContent = "Tap anywhere to drop a reference point";
+    document.getElementById("offline").textContent = s==="drawing" ? "● drawing cached offline" : "● photo on device";
+    renderSurface(); render();
+  }
+  document.getElementById("tab-drawing").addEventListener("click", function(){setSurface("drawing");});
+  document.getElementById("tab-photo").addEventListener("click", function(){setSurface("photo");});
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeComposer(); });
+  stage.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ /* keyboard drop center */ e.preventDefault(); var r=stage.getBoundingClientRect(); stage.dispatchEvent(new MouseEvent("click",{clientX:r.left+r.width/2, clientY:r.top+r.height/2})); }});
+
+  // init
+  renderSurface();
+  render();
+})();
+</script>
+</body>
+</html>
