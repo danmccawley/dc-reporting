@@ -18,17 +18,7 @@ front end later: swap the mock module for an API behind the same shape and the s
 - `/reports` — launchable report presentations (CANVAS-style). Each report opens summary-first, with clickable
   scope rows that jump to deep dives, and "view daily entries" links that drill all the way to the daily log.
   Printable to PDF.
-- CONCIERGE — a floating "Ask" button on every page answers questions about the program and the platform.
-
-## Enabling the CONCIERGE Q&A agent
-
-Out of the box CONCIERGE answers the common demo questions from the live sample data (no setup needed).
-To let it answer *any* open-ended question, set an OpenAI key as an environment variable:
-
-- Local: create `.env.local` with `OPENAI_API_KEY=sk-...` (optionally `OPENAI_MODEL=gpt-4o-mini`).
-- Vercel: Project → Settings → Environment Variables → add `OPENAI_API_KEY`, then redeploy.
-
-With no key set, it falls back to the grounded canned answers so the demo never breaks.
+- `/voice-field` — voice-first daily intake with deterministic local fallback when no OpenAI key is set.
 
 ## Run locally
 
@@ -67,8 +57,7 @@ Follow the prompts; accept defaults.
 - `app/report/weekly/page.js` — weekly report with approve/lock (links to the launchable report)
 - `app/reports/page.js` — index of generated reports
 - `app/reports/[id]/page.js` — launchable report presentation (summary → deep dive → daily)
-- `app/components/Concierge.js` + `app/api/concierge/route.js` — the Q&A agent (OpenAI-backed, local fallback)
-- `lib/context.js` — grounding context (platform + live demo data) for CONCIERGE
+- `lib/context.js` — compact platform and live demo context for future read-only derivations
 - `lib/mock/data.js` — the single source of sample data (swap this for the real layer)
 - `lib/rag.js` — RAG, trailing 4-week average, and trend logic (deterministic)
 

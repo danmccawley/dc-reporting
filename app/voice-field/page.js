@@ -34,7 +34,7 @@ export default function VoiceFieldDemo() {
           <div className="notice" style={{ marginTop: 14 }}>
             Voice mode runs in Chrome, Edge, and Safari. With an OpenAI key set, HERALD uses the model for
             richer extraction; with no key, a deterministic local parser runs so the demo never breaks \u2014
-            the same pattern CONCIERGE already uses.
+            the same fallback pattern used across AI-assisted seams.
           </div>
           <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
             <Link href="/request" className="btn">Request a report</Link>

@@ -1,6 +1,6 @@
 # AGENTS.md — build conventions for DC Field Reporting
 
-You are building **the best daily-reporting tool a data-center construction manager has ever used**, native to the OpenAI ecosystem (ChatGPT App + Codex). It is **not** a Procore/BIM replacement, **not** a multi-domain platform, **not** the old BERNARD/AIMUPS framing.
+You are building **the best daily-reporting tool a data-center construction manager has ever used**, native to the OpenAI ecosystem (ChatGPT App + Codex). It is **not** a Procore/BIM replacement, **not** a multi-domain platform, **not** the old orchestrator/platform-suite framing.
 
 ## Authorities (when in doubt, these win, in this order)
 1. `schema.ts` — the data contract. Validate everything against it. Never persist a value that isn't in it.
@@ -24,7 +24,7 @@ You are building **the best daily-reporting tool a data-center construction mana
 HERALD (intake normalize) · CHRONICLER (derive any cadence) · analytics engine (trend/anomaly/lagged-correlation/root-cause, dual framing, evidence links) · SCOUT (photo + drawing vision + clean-up) · WARDEN (daily-report quality). Names may appear as UI labels only.
 
 ## Build order (see SPEC §11 for acceptance criteria)
-0. Clear the deck (remove BERNARD/23-agent narrative + in-app chatbot; reduce provider-registry to read-only signals).
+0. Clear the deck (remove legacy orchestrator/23-agent narrative + in-app chatbot; reduce provider-registry to read-only signals).
 1. **Annotation engine (lead):** Capture → ReferencePoint (drawing points titleblock-normalized) → Note (voice/text, attached or standalone) → atoms. Prereqs: offline drawing caching; Apps SDK packaging.
 2. Data backbone (the seam + Postgres + Cron).
 3. Delivery spine (SSM: systems × levels, punch-gated).
@@ -38,7 +38,7 @@ HERALD (intake normalize) · CHRONICLER (derive any cadence) · analytics engine
 11. Apps SDK packaging.
 
 ## Do NOT
-- Reintroduce BERNARD/AIMUPS, the 23-agent roster, FORGE solutions-factory, or the in-app chatbot.
+- Reintroduce the legacy orchestrator/platform-suite framing, the 23-agent roster, FORGE solutions-factory, or the in-app chatbot.
 - Build native modules that replace Procore/ACC/Aconex/P6/Kahua.
 - Store any derived value, invent any number, or invent any geometry.
 - Send real data to any external service, or auto-deliver reports outside the sandbox, before security clearance.

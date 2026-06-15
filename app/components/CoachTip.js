@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { lessonForRoute } from "../../lib/coach";
 
-const HIDE = ["/login", "/start", "/mobile", "/coach", "/assistant"];
+const HIDE = ["/login", "/start", "/mobile", "/coach"];
 
 export default function CoachTip() {
   const path = usePathname();

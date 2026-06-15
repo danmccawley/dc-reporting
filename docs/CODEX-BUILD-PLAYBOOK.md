@@ -56,7 +56,7 @@ Codex reads these from `AGENTS.md`, but keep them in mind when reviewing every P
 - **`key ? OpenAI : local fallback` on every AI seam.** With no `OPENAI_API_KEY`, a deterministic local path keeps the app working.
 - **Synthetic data only** until security review clears. No real data to any third party; external sends route to a sandbox address.
 - **CMs author only dailies.** Everything else derives and gates on CM approval.
-- **Do NOT:** reintroduce BERNARD/AIMUPS, the 23-agent roster, or the in-app chatbot; build native replacements for Procore/ACC/P6; store derived values; invent numbers or geometry; send real data before clearance.
+- **Do NOT:** reintroduce the legacy orchestrator/platform-suite framing, the 23-agent roster, or the in-app chatbot; build native replacements for Procore/ACC/P6; store derived values; invent numbers or geometry; send real data before clearance.
 
 ---
 
@@ -72,7 +72,7 @@ Run these in order. Each block is the exact text to paste into Codex.
 Execute Slice 0 only, per SPEC-RECONCILED-v2.md and AGENTS.md.
 
 Goal: remove the legacy framing so the codebase matches the v2 spec.
-- Remove the BERNARD / AIMUPS narrative and the 23-agent roster (largely in lib/context.js) and the in-app chatbot (the Concierge component). ChatGPT is the conversational layer; there is no in-app chatbot.
+- Remove the legacy orchestrator/platform-suite narrative and the 23-agent roster (largely in lib/context.js) and the in-app chatbot. ChatGPT is the conversational layer; there is no in-app chatbot.
 - Reduce the agent/provider registry to the lean function set only: HERALD, CHRONICLER, analytics engine, SCOUT, WARDEN.
 - Treat external systems (Procore/ACC/P6) as read-only signals — keep any scaffolding but remove anything that positions them as native replacements.
 
@@ -84,7 +84,7 @@ Constraints:
 Open a PR summarizing exactly what was removed and why.
 ```
 
-**Before you merge, check:** the Bernard/23-agent narrative and the Concierge chatbot are gone; `lib/schema.ts` untouched; engine files (`herald.js`, `store.js`, `chronicler.js`) NOT deleted; build still green.
+**Before you merge, check:** the legacy 23-agent narrative and in-app chatbot are gone; `lib/schema.ts` untouched; engine files (`herald.js`, `store.js`, `chronicler.js`) NOT deleted; build still green.
 
 ---
 
@@ -305,7 +305,7 @@ Open a PR.
 
 ## 5. Review checklist (run on every PR before merging)
 
-- [ ] **In scope** — did only the slice's work; no Bernard/23-agents/chatbot reintroduced; no Procore-replacement built.
+- [ ] **In scope** — did only the slice's work; no legacy 23-agent/chatbot framing reintroduced; no Procore-replacement built.
 - [ ] **Schema respected** — `lib/schema.ts` unchanged (unless the task is about it); all new data validates against it.
 - [ ] **Nothing derived stored; nothing invented** — no persisted rollups; no made-up numbers or geometry.
 - [ ] **Fallback intact** — builds and runs with no `OPENAI_API_KEY`.

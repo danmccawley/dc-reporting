@@ -8,9 +8,9 @@ export default function PreferencesPage() {
     <div>
       <div className="eyebrow">Profile · preferences</div>
       <h1 className="title">Your preferences</h1>
-      <p className="sub">How Bernard and the analytics surface present intelligence to you. In the full platform these live on your profile and travel with your account; here they are saved in this browser. The prototype defaults to a tiered drill with cautious framing.</p>
+      <p className="sub">How the analytics surface presents intelligence to you. In the full platform these live on your profile and travel with your account; here they are saved in this browser. The prototype defaults to a tiered drill with cautious framing.</p>
 
-      <h2 className="sec">How Bernard delivers business intelligence</h2>
+      <h2 className="sec">How business intelligence is delivered</h2>
       <div className="card">
         {BI_DELIVERY.map((o) => (
           <label key={o.key} className="caprow" style={{ cursor: "pointer", alignItems: "baseline" }}>
@@ -28,9 +28,9 @@ export default function PreferencesPage() {
         ))}
       </div>
 
-      <div className="relnav"><span>Related:</span><Link href="/insights">Business intelligence</Link><Link href="/assistant">Assistant</Link><Link href="/admin">Admin</Link></div>
+      <div className="relnav"><span>Related:</span><Link href="/insights">Business intelligence</Link><Link href="/coach">Coach</Link><Link href="/admin">Admin</Link></div>
       <div className="notice" style={{ marginTop: 14 }}>
-        Bernard reads these settings: with <strong>tiered</strong> delivery he gives a one-line read and asks before going deeper; with <strong>findings</strong> he lists everything; <strong>both</strong> does both. Framing controls whether correlation and root-cause results are stated as signals to investigate or as confident calls (or both).
+        With <strong>tiered</strong> delivery the surface gives a one-line read before deeper detail; with <strong>findings</strong> it lists everything; <strong>both</strong> does both. Framing controls whether correlation and root-cause results are stated as signals to investigate or as confident calls (or both).
       </div>
     </div>
   );

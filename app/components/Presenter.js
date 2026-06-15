@@ -25,7 +25,7 @@ function AvatarHead({ hue, mouthOpen, blink, speaking }) {
   );
 }
 
-export default function Presenter({ mode = "class", deck = null, text = "", agent = "CONCIERGE", onClose }) {
+export default function Presenter({ mode = "class", deck = null, agent = "COACH", onClose }) {
   const persona = personaFor(agent);
   const isClass = mode === "class" && deck;
   const beats = isClass ? deck.beats : [];
@@ -34,76 +34,76 @@ export default function Presenter({ mode = "class", deck = null, text = "", agen
   const [mouth, setMouth] = useState(0);
   const [blink, setBlink] = useState(false);
   const [supported, setSupported] = useState(true);
-
-  // conversation state (reply mode)
-  const [live, setLive] = useState(text);
-  const [lastUser, setLastUser] = useState("");
-  const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [mic, setMic] = useState("idle"); // idle|listening|blocked|unsupported|error
-  const recRef = useRef(null);
   const mouthTimer = useRef(null), blinkTimer = useRef(null);
   const voice = voiceFor(isClass ? deck.persona : agent);
 
-  useEffect(() => { blinkTimer.current = setInterval(() => { setBlink(true); setTimeout(() => setBlink(false), 140); }, 3800); return () => clearInterval(blinkTimer.current); }, []);
-  const stopMouth = () => { clearInterval(mouthTimer.current); setMouth(0); };
-  const startMouth = () => { clearInterval(mouthTimer.current); mouthTimer.current = setInterval(() => setMouth(0.2 + Math.random() * 0.8), 90); };
+  useEffect(() => {
+    blinkTimer.current = setInterval(() => {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 140);
+    }, 3800);
+    return () => clearInterval(blinkTimer.current);
+  }, []);
+
+  const stopMouth = () => {
+    clearInterval(mouthTimer.current);
+    setMouth(0);
+  };
+  const startMouth = () => {
+    clearInterval(mouthTimer.current);
+    mouthTimer.current = setInterval(() => setMouth(0.2 + Math.random() * 0.8), 90);
+  };
 
   const say = useCallback((line, onEnd) => {
     const synth = typeof window !== "undefined" && window.speechSynthesis;
-    if (!synth) { setSupported(false); onEnd && onEnd(); return; }
+    if (!synth) {
+      setSupported(false);
+      onEnd && onEnd();
+      return;
+    }
     synth.cancel();
     const u = new SpeechSynthesisUtterance(line);
-    u.rate = voice.rate; u.pitch = voice.pitch;
+    u.rate = voice.rate;
+    u.pitch = voice.pitch;
     u.onstart = () => startMouth();
     u.onboundary = () => setMouth(0.3 + Math.random() * 0.7);
-    u.onend = () => { stopMouth(); onEnd && onEnd(); };
+    u.onend = () => {
+      stopMouth();
+      onEnd && onEnd();
+    };
     synth.speak(u);
   }, [voice]);
 
-  // class mode: narrate current beat, auto-advance when playing
   useEffect(() => {
     if (!isClass || !playing) return;
-    say(beats[idx]?.narration || "", () => { if (idx < beats.length - 1) setIdx(idx + 1); else setPlaying(false); });
-    return () => { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); stopMouth(); };
+    say(beats[idx]?.narration || "", () => {
+      if (idx < beats.length - 1) setIdx(idx + 1);
+      else setPlaying(false);
+    });
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+      stopMouth();
+    };
     // eslint-disable-next-line
   }, [playing, idx, isClass]);
 
-  // reply mode: speak the opening line once
-  useEffect(() => { if (!isClass) { setLive(text); say(text); } return () => { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); stopMouth(); };
-    // eslint-disable-next-line
-  }, []);
+  if (!isClass) return null;
 
-  const ask = useCallback(async (q) => {
-    const question = (q ?? input).trim(); if (!question || busy) return;
-    setLastUser(question); setInput(""); setBusy(true); setLive("…");
-    try {
-      const res = await fetch("/api/concierge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) });
-      const data = await res.json();
-      const a = data.answer || "Sorry, I couldn't answer that.";
-      setLive(a); say(a);
-    } catch { const e = "Network error reaching the assistant."; setLive(e); say(e); }
-    finally { setBusy(false); }
-  }, [input, busy, say]);
-
-  // one-shot mic dictation with explicit permission + status
-  const dictate = useCallback(async () => {
-    const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    if (!SR) { setMic("unsupported"); return; }
-    try { if (navigator.mediaDevices?.getUserMedia) { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach((t) => t.stop()); } }
-    catch { setMic("blocked"); return; }
-    const rec = new SR(); rec.lang = "en-US"; rec.interimResults = false; rec.continuous = false;
-    rec.onstart = () => setMic("listening");
-    rec.onresult = (e) => { const t = e.results[0][0].transcript; setMic("idle"); ask(t); };
-    rec.onerror = (e) => setMic(e.error === "not-allowed" || e.error === "service-not-allowed" ? "blocked" : "error");
-    rec.onend = () => setMic((m) => (m === "listening" ? "idle" : m));
-    recRef.current = rec; try { rec.start(); } catch { setMic("error"); }
-  }, [ask]);
-
-  const beat = isClass ? beats[idx] : null;
-  const go = (n) => { const ni = Math.max(0, Math.min(beats.length - 1, n)); if (window.speechSynthesis) window.speechSynthesis.cancel(); stopMouth(); setIdx(ni); if (playing) say(beats[ni]?.narration || ""); };
-  const toggle = () => { if (playing) { if (window.speechSynthesis) window.speechSynthesis.cancel(); stopMouth(); setPlaying(false); } else setPlaying(true); };
-  const micLabel = { idle: "🎙 Talk", listening: "● Listening…", blocked: "🎙 Mic blocked", unsupported: "🎙 N/A", error: "🎙 Retry" }[mic];
+  const beat = beats[idx];
+  const go = (n) => {
+    const ni = Math.max(0, Math.min(beats.length - 1, n));
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    stopMouth();
+    setIdx(ni);
+    if (playing) say(beats[ni]?.narration || "");
+  };
+  const toggle = () => {
+    if (playing) {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      stopMouth();
+      setPlaying(false);
+    } else setPlaying(true);
+  };
 
   return (
     <div className="presenter-scrim" onClick={onClose}>
@@ -113,38 +113,22 @@ export default function Presenter({ mode = "class", deck = null, text = "", agen
           <button className="chip" onClick={onClose}>Close</button>
         </div>
         <div className="presenter-body">
-          <div className="presenter-stage"><AvatarHead hue={persona.hue} mouthOpen={mouth} blink={blink} speaking={playing || busy || mouth > 0} /></div>
+          <div className="presenter-stage"><AvatarHead hue={persona.hue} mouthOpen={mouth} blink={blink} speaking={playing || mouth > 0} /></div>
           <div className="presenter-content">
-            {isClass && <div className="eyebrow">{beat.heading}</div>}
-            {isClass && beat.points && beat.points.map((p, i) => <div key={i} style={{ fontSize: 16, fontWeight: 600, margin: "4px 0" }}>{p}</div>)}
-            {!isClass && lastUser && <div style={{ fontSize: 12, color: "var(--muted)" }}>You asked: {lastUser}</div>}
-            <div className="presenter-caption">{isClass ? beat.narration : live}</div>
-            {isClass && beat.action && <Link href={beat.action.href} className="scopelink" onClick={onClose}>{beat.action.label} →</Link>}
-            {!isClass && (
-              <div className="presenter-reply">
-                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ask()} placeholder="Reply to Bernard…" />
-                <button className={`voice-btn ${mic === "listening" ? "on" : ""}`} onClick={dictate} title="Talk">{micLabel}</button>
-                <button className="btn" onClick={() => ask()} disabled={busy}>Send</button>
-              </div>
-            )}
-            {!isClass && mic === "blocked" && <div className="voice-hint">Microphone is blocked. Click the lock icon in the address bar → allow microphone, then try again.</div>}
-            {!isClass && mic === "unsupported" && <div className="voice-hint">This browser can't capture speech. Use Chrome or Edge, or type your reply.</div>}
+            <div className="eyebrow">{beat.heading}</div>
+            {beat.points && beat.points.map((p, i) => <div key={i} style={{ fontSize: 16, fontWeight: 600, margin: "4px 0" }}>{p}</div>)}
+            <div className="presenter-caption">{beat.narration}</div>
+            {beat.action && <Link href={beat.action.href} className="scopelink" onClick={onClose}>{beat.action.label} →</Link>}
           </div>
         </div>
         <div className="presenter-controls">
-          {isClass && <>
-            <button className="btn" onClick={toggle}>{playing ? "Pause" : "Play"}</button>
-            <button className="seg" onClick={() => go(idx - 1)} disabled={idx === 0}>Prev</button>
-            <button className="seg" onClick={() => go(idx + 1)} disabled={idx === beats.length - 1}>Next</button>
-            <span className="mono" style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>{idx + 1} / {beats.length}</span>
-          </>}
-          {!isClass && <>
-            <button className="btn" onClick={() => say(live)}>Replay</button>
-            <span className="mono" style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>{busy ? "thinking…" : "ready"}</span>
-          </>}
+          <button className="btn" onClick={toggle}>{playing ? "Pause" : "Play"}</button>
+          <button className="seg" onClick={() => go(idx - 1)} disabled={idx === 0}>Prev</button>
+          <button className="seg" onClick={() => go(idx + 1)} disabled={idx === beats.length - 1}>Next</button>
+          <span className="mono" style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>{idx + 1} / {beats.length}</span>
         </div>
         <div className="presenter-foot">
-          In-tenant presenter (browser speech engine + mic). Production renders this as the NVIDIA ACE / Audio2Face avatar with Riva ASR on tenant GPUs — voice in and out stays in the tenant.{!supported && " Your browser has no speech engine; captions only."}
+          In-tenant presenter prototype using the browser speech engine. Production narration can run on tenant-managed voice infrastructure; captions remain available when speech is unsupported.{!supported && " Your browser has no speech engine; captions only."}
         </div>
       </div>
     </div>

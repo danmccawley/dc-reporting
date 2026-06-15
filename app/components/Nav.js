@@ -50,8 +50,7 @@ const GROUPS = [
     { href: "/report/weekly", label: "Weekly report" },
     { href: "/reports", label: "All reports" },
   ] },
-  { title: "Assistant & learning", links: [
-    { href: "/assistant", label: "Assistant" },
+  { title: "Learning", links: [
     { href: "/coach", label: "Coach" },
   ] },
   { title: "Knowledge & solutions", links: [
