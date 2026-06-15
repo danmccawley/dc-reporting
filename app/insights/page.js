@@ -79,9 +79,9 @@ export default function Insights() {
         </div>
       ))}
 
-      <div className="relnav"><span>Related:</span><Link href="/assistant">Ask Bernard</Link><Link href="/preferences">Preferences</Link><Link href={`/site/${b}`}>{bn}</Link></div>
+      <div className="relnav"><span>Related:</span><Link href="/preferences">Preferences</Link><Link href="/coach">Coach</Link><Link href={`/site/${b}`}>{bn}</Link></div>
       <div className="notice" style={{ marginTop: 14 }}>
-        This is computed BI, not stored: trends, correlations, and lagged correlations come straight from the weekly atomic readings, and each finding links to the work behind it. AUGUR raises these as hypotheses for human review — the platform never asserts a cause it cannot evidence. Ask Bernard to walk you from the summary down to the entries.
+        This is computed BI, not stored: trends, correlations, and lagged correlations come straight from the weekly atomic readings, and each finding links to the work behind it. Analytics raises these as hypotheses for human review — the platform never asserts a cause it cannot evidence.
       </div>
     </div>
   );

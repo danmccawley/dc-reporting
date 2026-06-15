@@ -61,7 +61,7 @@ export default function Forge() {
         );
       })}
 
-      <div className="relnav"><span>Related:</span><Link href="/library">Knowledge base</Link><Link href="/insights">Insights</Link><Link href="/assistant">Assistant</Link></div>
+      <div className="relnav"><span>Related:</span><Link href="/library">Knowledge base</Link><Link href="/insights">Insights</Link><Link href="/plan">Build plan</Link></div>
       <div className="notice" style={{ marginTop: 14 }}>
         FORGE never deploys autonomously — a human owner approves every solution before it goes live, and NOTARY records what was built, from what, and why. Patterns that prove durable (like RFI-EXPEDITER) are folded into the permanent roster; one-off responses are retired once the challenge clears.
       </div>

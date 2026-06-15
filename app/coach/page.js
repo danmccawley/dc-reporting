@@ -70,9 +70,9 @@ export default function Coach() {
         </>
       )}
 
-      <div className="relnav"><span>Related:</span><Link href="/assistant">Assistant</Link><Link href="/quality">Report quality</Link><Link href="/plan">Build plan</Link></div>
+      <div className="relnav"><span>Related:</span><Link href="/quality">Report quality</Link><Link href="/plan">Build plan</Link><Link href="/insights">Business intelligence</Link></div>
       <div className="notice" style={{ marginTop: 14 }}>
-        COACH also appears as a small prompt on individual screens (look for the Coach pill near the assistant). Each lesson ends with a concrete action so you practice the skill on real program data, not a sandbox. Press <strong>Play narrated class</strong> for the avatar-led version.
+        COACH also appears as a small prompt on individual screens (look for the Coach pill near the page edge). Each lesson ends with a concrete action so you practice the skill on real program data, not a sandbox. Press <strong>Play narrated class</strong> for the avatar-led version.
       </div>
       {playing && <Presenter mode="class" deck={buildClass(playing)} agent="COACH" onClose={() => setPlaying(null)} />}
     </div>

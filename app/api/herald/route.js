@@ -1,7 +1,7 @@
 import { heraldParse } from "../../../lib/herald";
 import { buildings, scopes } from "../../../lib/mock/data";
 
-// HERALD intake endpoint. Mirrors the CONCIERGE pattern: if OPENAI_API_KEY is set,
+// HERALD intake endpoint. If OPENAI_API_KEY is set,
 // the model does structured extraction; otherwise the deterministic local parser
 // runs so the demo never breaks. Either way the output is the same structured shape
 // and HERALD never invents a number that wasn't in what the CM said.

@@ -6,7 +6,7 @@
 ---
 
 ## 0. Scope lock (carried from v1)
-One product: the best daily-reporting tool a data-center construction manager has ever used, native to the OpenAI ecosystem (ChatGPT App + Codex). **Not** a Procore/BIM replacement, **not** a multi-domain platform, **not** the AIMUPS/BERNARD framing. A construction-manager reporting ecosystem — rich, but focused on capture → synthesis → reporting.
+One product: the best daily-reporting tool a data-center construction manager has ever used, native to the OpenAI ecosystem (ChatGPT App + Codex). **Not** a Procore/BIM replacement, **not** a multi-domain platform, **not** the legacy orchestrator/platform-suite framing. A construction-manager reporting ecosystem — rich, but focused on capture → synthesis → reporting.
 
 Core promise: **the CM authors one daily report; everything else derives and waits for approval.**
 
@@ -53,7 +53,7 @@ Primary status surface: **systems (rows) × buildings**, each cell showing curre
 
 - **KEEP — the reporting core:** `store` → `herald` → `chronicler` → `rag`; `analytics.js` (the BI engine — trend, anomaly, lagged correlation, root-cause hypotheses, dual framing, evidence links); the `features.js` derivations (weather→delay, manpower forecast, procurement risk, look-ahead, punchlist, report-quality); voice daily form; SCOUT vision; COACH JIT training (13 lessons). **Most of the requested feature set already exists here.**
 - **REFRAME — consume, don't replace:** external systems (Procore/ACC/P6) are read-only signals feeding reports, not native replacements. Drop the "native module replacement / provider registry" framing.
-- **CUT/PARK:** BERNARD orchestration narrative + 23-agent roster as architecture; FORGE solutions-factory, LIBRARIAN tiers, PROVOST register; the in-app CONCIERGE/Bernard chatbot.
+- **CUT/PARK:** legacy orchestration narrative + 23-agent roster as architecture; FORGE solutions-factory, LIBRARIAN tiers, PROVOST register; the in-app chatbot.
 - **SURFACE:** ChatGPT App (Apps SDK) — the rich UI renders inside ChatGPT via an MCP server; **ChatGPT itself is the conversational layer** (no in-app chatbot). Server-side store + scheduler for the real build.
 - **Lean function set (≈5, not 23):** intake/normalize (HERALD) · derive/cascade (CHRONICLER) · analyze/narrate (analytics engine) · vision + drawing clean-up (SCOUT) · report quality (WARDEN). Named personas may persist as cosmetic UI labels; they are not orchestrated agents.
 
@@ -156,7 +156,7 @@ Upload a recipient's example report → AI learns the **container (slots/structu
 
 | Slice | Build | Acceptance criteria |
 |---|---|---|
-| **0 — Clear the deck** | Prune to scope | BERNARD/23-agent narrative + in-app chatbot removed; provider-registry "replacement" reduced to read-only signal; app still builds; reporting core untouched. |
+| **0 — Clear the deck** | Prune to scope | Legacy orchestrator/23-agent narrative + in-app chatbot removed; provider-registry "replacement" reduced to read-only signal; app still builds; reporting core untouched. |
 | **1 — Annotation engine (LEAD)** | Reference points + notes on captures | Point on photo or cached drawing; drawing points titleblock-normalized; note attached or standalone; voice + text; all append as atoms; survives a revision swap. |
 | **2 — Data backbone** | The swappable seam + Postgres | `store.js` → Neon Postgres + Blob + pgvector behind one data-access module; append/read shapes unchanged; Vercel Cron runs a scheduled job; seam documented as re-pointable to in-house store. |
 | **3 — Delivery spine (SSM)** | L1–L5 per system | `System` + `CommissioningRecord` + `PunchItem`; SSM matrix (systems × buildings) with tag colors; punch-gated advancement enforced in the store; construction tracked as progress-to-L1. |
